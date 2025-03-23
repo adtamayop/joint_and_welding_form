@@ -1,0 +1,15 @@
+actividades:
+  - LIMPIEZA
+  - PENETRANTE
+  - REVELADOR
+tiempos:
+  - "5:00 min"
+  - "12:00 min"
+  - "3:00 min"
+  - "10:00 min"
+temperaturas:
+  - "26° C"
+aplicaciones:
+  - "Spray"
+iluminaciones:
+  - "Luz Natural"

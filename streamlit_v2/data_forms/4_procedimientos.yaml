@@ -1,0 +1,21 @@
+normas: "ASTM E 165, ASTM E 1417"
+
+tipo_opciones:
+  - "Tipo 1 - Penetrantes Fluorescentes (requieren luz ultravioleta para la inspección)"
+  - "Tipo 2 - Penetrantes Visibles (pueden verse a simple vista con iluminación normal)"
+tipo_index: 1
+
+metodo_opciones:
+  - "Método A - Hidrolavable (se elimina con agua)"
+  - "Método B - Eliminable con Emulsificador Lipofílico (requiere un emulsificador antes del enjuague)"
+  - "Método C - Eliminable con Solvente (Se limpia con solvente y toalla)"
+  - "Método D - Eliminable con emulsificador hidrofílico (requiere un emulsificador en base a agua)"
+metodo_index: 2
+
+procedimiento: |
+  1. Limpieza de la superficie con método manual (con paño).
+  2. Aplicación de limpiador.
+  3. Aplicación del líquido penetrante (tiempo de penetración: 10:00 min).
+  4. Limpieza del líquido penetrante.
+  5. Aplicación de revelador (tiempo de revelado: 10:00 min).
+  6. Limpieza final.

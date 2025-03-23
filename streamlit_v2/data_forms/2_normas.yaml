@@ -1,0 +1,16 @@
+normas:
+  - "AWS D1.1 2020"
+  - "ISO 15614-1"
+  - "ASME Section IX"
+procedimientos:
+  - "TLPR0025 Rev.04"
+  - "Procedimiento de Soldadura 2"
+  - "Procedimiento de Soldadura 3"
+materiales:
+  - "ASTM A500 Gr C"
+  - "ASTM A36"
+  - "ASTM A992"
+procesos:
+  - "GMAW"
+  - "SMAW"
+  - "FCAW"
