@@ -1,0 +1,87 @@
+codigo,nombre,descripcion,tipo
+ASTM A36,ASTM A36,Acero estructural al carbono de uso general,Placas y Perfiles
+ASTM A283 Gr A,ASTM A283 Gr A,Placas de acero al carbono,Placas
+ASTM A283 Gr B,ASTM A283 Gr B,Placas de acero al carbono,Placas
+ASTM A283 Gr C,ASTM A283 Gr C,Placas de acero al carbono,Placas
+ASTM A283 Gr D,ASTM A283 Gr D,Placas de acero al carbono,Placas
+ASTM A285 Gr C,ASTM A285 Gr C,Placas de acero al carbono para recipientes a presión,Placas
+ASTM A306,ASTM A306,Acero al carbono para estructuras (descontinuado/absorbido),Placas y Perfiles
+ASTM A529 Gr 50,ASTM A529 Gr 50,Aceros al carbono para construcción,Perfiles Estructurales
+ASTM A529 Gr 55,ASTM A529 Gr 55,Aceros al carbono para construcción,Perfiles Estructurales
+ASTM A573 Gr 58,ASTM A573 Gr 58,Placas estructurales al carbono/baja aleación,Placas
+ASTM A573 Gr 65,ASTM A573 Gr 65,Placas estructurales al carbono/baja aleación,Placas
+ASTM A573 Gr 70,ASTM A573 Gr 70,Placas estructurales al carbono/baja aleación,Placas
+ASTM A572 Gr 42,ASTM A572 Gr 42,Aceros HSLA para estructuras,Placas y Perfiles
+ASTM A572 Gr 50,ASTM A572 Gr 50,Aceros HSLA para estructuras,Placas y Perfiles
+ASTM A572 Gr 55,ASTM A572 Gr 55,Aceros HSLA para estructuras,Placas y Perfiles
+ASTM A572 Gr 60,ASTM A572 Gr 60,Aceros HSLA para estructuras,Placas y Perfiles
+ASTM A572 Gr 65,ASTM A572 Gr 65,Aceros HSLA para estructuras,Placas y Perfiles
+ASTM A656 Gr 50,ASTM A656 Gr 50,Placas HSLA laminadas en caliente,Placas
+ASTM A656 Gr 60,ASTM A656 Gr 60,Placas HSLA laminadas en caliente,Placas
+ASTM A656 Gr 70,ASTM A656 Gr 70,Placas HSLA laminadas en caliente,Placas
+ASTM A656 Gr 80,ASTM A656 Gr 80,Placas HSLA laminadas en caliente,Placas
+ASTM A709 Gr 36,ASTM A709 Gr 36,Aceros HSLA para puentes,Puentes
+ASTM A709 Gr 50,ASTM A709 Gr 50,Aceros HSLA para puentes,Puentes
+ASTM A709 Gr 50W,ASTM A709 Gr 50W,Aceros HSLA resistentes a la corrosión para puentes,Puentes
+ASTM A709 HPS 50W,ASTM A709 HPS 50W,Aceros HSLA para puentes alta resistencia,Puentes
+ASTM A709 HPS 70W,ASTM A709 HPS 70W,Aceros HSLA para puentes ultra alta resistencia,Puentes
+ASTM A852,ASTM A852,Placas HSLA resistentes a la corrosión atmosférica,Placas
+ASTM A992,ASTM A992,Acero estructural para perfiles W,Perfiles Estructurales
+ASTM A913 Gr 50,ASTM A913 Gr 50,Perfiles estructurales de alta resistencia,Perfiles Estructurales
+ASTM A913 Gr 65,ASTM A913 Gr 65,Perfiles estructurales de alta resistencia,Perfiles Estructurales
+ASTM A913 Gr 70,ASTM A913 Gr 70,Perfiles estructurales de alta resistencia,Perfiles Estructurales
+ASTM A913 Gr 80,ASTM A913 Gr 80,Perfiles estructurales de muy alta resistencia,Perfiles Estructurales
+ASTM A1043 Gr 50,ASTM A1043 Gr 50,Perfiles estructurales de alta resistencia/alta soldabilidad,Perfiles Estructurales
+ASTM A1043 Gr 65,ASTM A1043 Gr 65,Perfiles estructurales de alta resistencia/alta soldabilidad,Perfiles Estructurales
+ASTM A1085,ASTM A1085,Tubos HSS normalizados de alta resistencia,Tubos Estructurales (HSS)
+ASTM A242 Tipo 1,ASTM A242 Tipo 1,Acero con resistencia mejorada a la corrosión (weathering),Placas y Perfiles
+ASTM A242 Tipo 2,ASTM A242 Tipo 2,Acero con resistencia mejorada a la corrosión (weathering),Placas y Perfiles
+ASTM A588,ASTM A588 (Corten),HSLA resistente a la corrosión atmosférica,Placas y Perfiles
+ASTM A690,ASTM A690,Acero resistente a la corrosión marina,Placas y Perfiles
+ASTM A606 Tipo 4,ASTM A606 Tipo 4,Láminas/chapas resistentes a la corrosión,Láminas y Bobinas
+ASTM A514 Gr B,ASTM A514 Gr B,Placas de alta resistencia templadas y revenidas,Placas
+ASTM A514 Gr Q,ASTM A514 Gr Q,Placas de alta resistencia templadas y revenidas,Placas
+ASTM A514 Gr S,ASTM A514 Gr S,Placas de alta resistencia templadas y revenidas,Placas
+ASTM A517 Gr A,ASTM A517 Gr A,Placas aleadas templadas y revenidas (recipientes a presión),Placas
+ASTM A517 Gr F,ASTM A517 Gr F,Placas aleadas templadas y revenidas (recipientes a presión),Placas
+ASTM A517 Gr Q,ASTM A517 Gr Q,Placas aleadas templadas y revenidas (recipientes a presión),Placas
+ASTM A633 Gr A,ASTM A633 Gr A,Placas HSLA normalizadas,Placas
+ASTM A633 Gr C,ASTM A633 Gr C,Placas HSLA normalizadas,Placas
+ASTM A633 Gr D,ASTM A633 Gr D,Placas HSLA normalizadas,Placas
+ASTM A633 Gr E,ASTM A633 Gr E,Placas HSLA normalizadas,Placas
+ASTM A737 Gr A,ASTM A737 Gr A,Placas de baja aleación T&R (servicio a presión),Placas
+ASTM A737 Gr B,ASTM A737 Gr B,Placas de baja aleación T&R (servicio a presión),Placas
+ASTM A737 Gr C,ASTM A737 Gr C,Placas de baja aleación T&R (servicio a presión),Placas
+ASTM A500 Gr A,ASTM A500 Gr A,Tubos estructurales de acero al carbono,Tubos Estructurales (HSS)
+ASTM A500 Gr B,ASTM A500 Gr B,Tubos estructurales de acero al carbono,Tubos Estructurales (HSS)
+ASTM A500 Gr C,ASTM A500 Gr C,Tubos estructurales de acero al carbono,Tubos Estructurales (HSS)
+ASTM A501,ASTM A501,Tubos estructurales soldados y sin costura,Tubos Estructurales
+ASTM A847,ASTM A847,Tubos HSS resistentes a la corrosión (weathering),Tubos Estructurales (HSS)
+ASTM A1065,ASTM A1065,Secciones HSS soldadas (rectangulares/cuadradas) de gran tamaño,Perfiles HSS
+ASTM A618 Gr I,ASTM A618 Gr I,Tubos HSLA soldados y conformados en frío,Tubos Estructurales (HSS)
+ASTM A618 Gr II,ASTM A618 Gr II,Tubos HSLA soldados y conformados en frío,Tubos Estructurales (HSS)
+ASTM A618 Gr III,ASTM A618 Gr III,Tubos HSLA soldados y conformados en frío,Tubos Estructurales (HSS)
+ASTM A131 Gr A,ASTM A131 Gr A,Aceros estructurales para construcción naval,Naval
+ASTM A131 Gr B,ASTM A131 Gr B,Aceros estructurales para construcción naval,Naval
+ASTM A131 Gr D,ASTM A131 Gr D,Aceros estructurales para construcción naval,Naval
+ASTM A131 Gr E,ASTM A131 Gr E,Aceros estructurales para construcción naval,Naval
+ASTM A131 AH36,ASTM A131 AH36,Aceros estructurales para construcción naval,Naval
+ASTM A131 DH36,ASTM A131 DH36,Aceros estructurales para construcción naval,Naval
+ASTM A131 EH36,ASTM A131 EH36,Aceros estructurales para construcción naval,Naval
+ASTM A307 Gr A,ASTM A307 Gr A,Pernos de acero al carbono,Pernos y Fijaciones
+ASTM A307 Gr B,ASTM A307 Gr B,Pernos de acero al carbono,Pernos y Fijaciones
+ASTM A325,ASTM A325,Pernos estructurales de alta resistencia,Pernos y Fijaciones
+ASTM A490,ASTM A490,Pernos aleados de alta resistencia,Pernos y Fijaciones
+ASTM F3125 Gr A325,ASTM F3125 Gr A325,Pernos estructurales de alta resistencia (equiv. A325),Pernos y Fijaciones
+ASTM F3125 Gr A490,ASTM F3125 Gr A490,Pernos estructurales de alta resistencia (equiv. A490),Pernos y Fijaciones
+ASTM A354 Gr BC,ASTM A354 Gr BC,Pernos y tornillos de alta resistencia,Pernos y Fijaciones
+ASTM A354 Gr BD,ASTM A354 Gr BD,Pernos y tornillos de alta resistencia,Pernos y Fijaciones
+ASTM A36M,ASTM A36M,Versión métrica de A36,Placas y Perfiles
+ASTM A572M Gr 345,ASTM A572M Gr 345 (Gr 50),Versión métrica de A572,Placas y Perfiles
+ASTM A992M,ASTM A992M,Versión métrica de A992,Perfiles Estructurales
+ASTM A588M,ASTM A588M,Versión métrica de A588,Placas y Perfiles
+ASTM A1085M,ASTM A1085M,Versión métrica de A1085,Tubos Estructurales (HSS)
+ASTM A715,ASTM A715,Aceros HSLA para aplicaciones estructurales generales,Placas y Perfiles
+ASTM A441,ASTM A441 (reemplazado por A572),HSLA estructural (descontinuado),Placas y Perfiles
+ASTM A618M,ASTM A618M,Tubos estructurales HSLA (versión métrica),Tubos Estructurales (HSS)
+ASTM A852M,ASTM A852M,Aceros resistentes a la corrosión (versión métrica),Placas

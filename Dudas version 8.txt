@@ -1,0 +1,4 @@
+1. La imagen de la firma en qué parte va a ir? en todas las páginas? y el nombre escrito se manteiene o solo la imagen? como se quiere esto en el informe?
+2. En la fecha, usé el widget de fecha y no se deja modificar el formato, pero cuando el informe si se está dejando en el formato que ellos pidieron
+3. Del punto de 2. poder editar el procedimiento ya que hay varios procedimientos de particulas (Donde debería de quedar en el informe?
+4. 1. Equipos Utilizados: la informacion que debe de ir en equipos utilizados es: Esta estructura debe ser igual en todos los informes? o solo en ultrasonido?
