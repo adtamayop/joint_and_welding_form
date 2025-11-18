@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime
-from utils import cargar_inspectores, cargar_normas
+from utils import cargar_inspectores, cargar_normas, generar_numero_informe
 
 
 def formatear_fecha_para_display(fecha):
@@ -133,7 +133,8 @@ with tab1:
         "proyecto": "Inspección de Estructuras",
         "subproyecto": "Inspección No Destructiva",
         "contratista": "Nureon S.A.S",
-        "reporte_no": f"REP-{datetime.now().year}-{datetime.now().strftime('%m%d')}",
+        "numero_orden": "209",
+        "consecutivo_inicial": "462",
         "elaboro": "Andrés López",
         "norma_global": "AWS D1.1 2020",
         "fecha": datetime.now().date(),
@@ -170,7 +171,37 @@ with tab1:
             proyecto = st.text_input("Proyecto", valores["proyecto"], help="Nombre del proyecto")
             subproyecto = st.text_input("Subproyecto", valores["subproyecto"], help="Nombre del subproyecto o área específica")
             contratista = st.text_input("Contratista", valores["contratista"], help="Nombre de la empresa contratista")
-            reporte_no = st.text_input("Reporte N°", valores["reporte_no"], help="Número de identificación del reporte")
+            
+            # Numeración de informes
+            st.markdown("---")
+            st.markdown("**📋 Numeración de Informes**")
+            col_orden, col_consec = st.columns(2)
+            with col_orden:
+                numero_orden = st.text_input(
+                    "Número de Orden", 
+                    valores.get("numero_orden", "209"), 
+                    help="Número de orden. Ej: 209"
+                )
+            with col_consec:
+                consecutivo_inicial = st.text_input(
+                    "Consecutivo Inicial", 
+                    valores.get("consecutivo_inicial", "462"), 
+                    help="Consecutivo del informe visual (3 dígitos). Ej: 462"
+                )
+            
+            # Mostrar vista previa de los números de informe
+            if numero_orden and consecutivo_inicial:
+                try:
+                    year = datetime.now().year
+                    st.info(
+                        f"**Vista previa de números de informe:**\n\n"
+                        f"- 👁️ Visual: `{generar_numero_informe(numero_orden, consecutivo_inicial, year, 0)}`\n"
+                        f"- 💧 Líquidos: `{generar_numero_informe(numero_orden, consecutivo_inicial, year, 1)}`\n"
+                        f"- 🧲 Partículas: `{generar_numero_informe(numero_orden, consecutivo_inicial, year, 2)}`\n"
+                        f"- 📡 Ultrasonido: `{generar_numero_informe(numero_orden, consecutivo_inicial, year, 3)}`"
+                    )
+                except:
+                    st.warning("⚠️ Por favor ingrese números válidos")
 
     with col2:
         st.subheader("📋 Detalles del Informe")
@@ -241,11 +272,19 @@ with col2:
     if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
         if not modulos_seleccionados:
             st.error("⚠️ Debe seleccionar al menos un módulo")
+        elif not numero_orden or not consecutivo_inicial:
+            st.error("⚠️ Debe ingresar el número de orden y el consecutivo inicial")
         else:
+            # Generar número de informe base (visual)
+            numero_informe_base = generar_numero_informe(numero_orden, consecutivo_inicial, fecha.year if hasattr(fecha, 'year') else datetime.now().year, 0)
+            
             # Guardar datos del proyecto en formato para reporte
             st.session_state.datos_proyecto = {
-                "numero_informe": reporte_no,
+                "numero_orden": numero_orden,
+                "consecutivo_inicial": consecutivo_inicial,
+                "numero_informe": numero_informe_base,  # Para compatibilidad
                 "fecha": formatear_fecha_para_display(fecha) if hasattr(fecha, 'strftime') else str(fecha),
+                "fecha_obj": fecha,  # Guardar objeto fecha también
                 "cliente": cliente,
                 "proyecto": proyecto,
                 "ubicacion": lugar,
@@ -266,7 +305,9 @@ with col2:
                 "proyecto": proyecto,
                 "subproyecto": subproyecto,
                 "contratista": contratista,
-                "reporte_no": reporte_no,
+                "numero_orden": numero_orden,
+                "consecutivo_inicial": consecutivo_inicial,
+                "reporte_no": numero_informe_base,  # Para compatibilidad
                 "elaboro": elaboro,
                 "norma_global": norma_global,
                 "fecha": fecha,

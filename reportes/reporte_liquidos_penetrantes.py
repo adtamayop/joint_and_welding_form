@@ -16,12 +16,36 @@ class ReporteLiquidosPenetrantes:
     
     def extraer_datos_proyecto(self) -> Dict[str, Any]:
         """Extrae datos del proyecto"""
+        from utils import generar_numero_informe
+        
         if 'datos_proyecto' in st.session_state:
-            return st.session_state['datos_proyecto']
+            dp = st.session_state['datos_proyecto']
+            # Generar número de informe para líquidos penetrantes (offset 1)
+            numero_orden = dp.get('numero_orden', '1234')
+            consecutivo_inicial = dp.get('consecutivo_inicial', '100')
+            fecha_obj = dp.get('fecha_obj', datetime.now())
+            year = fecha_obj.year if hasattr(fecha_obj, 'year') else datetime.now().year
+            numero_informe = generar_numero_informe(numero_orden, consecutivo_inicial, year, 1)
+            
+            dp_copy = dp.copy()
+            dp_copy['numero_informe'] = numero_informe
+            # Asegurar que 'ubicacion' esté presente (puede estar como 'ubicacion' o necesitar formateo)
+            if 'ubicacion' not in dp_copy or not dp_copy.get('ubicacion') or dp_copy.get('ubicacion') == 'Lugar':
+                # Intentar obtener de 'lugar' si existe
+                if 'lugar' in dp_copy and dp_copy.get('lugar') and dp_copy.get('lugar') != 'Lugar':
+                    dp_copy['ubicacion'] = dp_copy['lugar']
+            return dp_copy
+            
         elif 'bloque_1' in st.session_state:
             bloque_1 = st.session_state['bloque_1']
+            numero_orden = bloque_1.get('numero_orden', '1234')
+            consecutivo_inicial = bloque_1.get('consecutivo_inicial', '100')
+            fecha = bloque_1.get('fecha', datetime.now())
+            year = fecha.year if hasattr(fecha, 'year') else datetime.now().year
+            numero_informe = generar_numero_informe(numero_orden, consecutivo_inicial, year, 1)
+            
             return {
-                'numero_informe': bloque_1.get('reporte_no', 'T1234I1005'),
+                'numero_informe': numero_informe,
                 'fecha': bloque_1.get('fecha', datetime.now().strftime('%d/%m/%Y')),
                 'cliente': bloque_1.get('cliente', 'Cliente'),
                 'proyecto': bloque_1.get('proyecto', 'Proyecto'),
@@ -32,7 +56,7 @@ class ReporteLiquidosPenetrantes:
             }
         else:
             return {
-                'numero_informe': 'T1234I1005',
+                'numero_informe': 'T1234I1015',
                 'fecha': datetime.now().strftime('%d/%m/%Y'),
                 'cliente': 'Cliente',
                 'proyecto': 'Proyecto',
@@ -53,6 +77,10 @@ class ReporteLiquidosPenetrantes:
                 'proceso': bloque_3_1.get('proceso', 'Proceso de Soldadura'),
                 'equipos': bloque_3_1.get('equipos', 'Kit de Líquidos Penetrantes'),
                 'materiales': bloque_3_1.get('materiales', []),
+                'estandares_astm': bloque_3_1.get('estandares_astm', [
+                    'ASTM E 165: Standard Test Method for Liquid Penetrant Examination',
+                    'ASTM E 1417: Standard Practice for Liquid Penetrant Examination'
+                ]),
                 'tipo': bloque_3_1.get('tipo', 'II - Líquidos Penetrantes Visibles'),
                 'metodo': bloque_3_1.get('metodo', 'C - Removible con Solvente'),
                 'procedimiento': bloque_3_1.get('procedimiento', 'TLPR0026 - Inspección de Líquidos Penetrantes - Rev. 1'),
@@ -73,7 +101,11 @@ class ReporteLiquidosPenetrantes:
                 'proceso': 'Proceso de Soldadura',
                 'equipos': 'Kit de Líquidos Penetrantes',
                 'materiales': [],
-                'tipo': 'II - Líquidos Penetrantes Visibles',
+                'estandares_astm': [
+                    'ASTM E 165: Standard Test Method for Liquid Penetrant Examination',
+                    'ASTM E 1417: Standard Practice for Liquid Penetrant Examination'
+                ],
+                'tipo': 'II-Líquidos Penetrantes',
                 'metodo': 'C - Removible con Solvente',
                 'procedimiento': 'TLPR0026 - Inspección de Líquidos Penetrantes - Rev. 1',
                 'pasos_procedimiento': '',
@@ -90,11 +122,11 @@ class ReporteLiquidosPenetrantes:
         elementos_procesados = []
         for elemento in elementos:
             elementos_procesados.append({
-                'elemento': elemento.get('descripcion', ''),
-                'especificacion': elemento.get('especificacion', ''),
+                'numero': elemento.get('numero', ''),
+                'descripcion': elemento.get('descripcion', ''),
                 'indicacion': elemento.get('indicacion', ''),
-                'cal': elemento.get('calificacion', 'Satisfactorio'),
-                'observaciones': elemento.get('observacion', '')
+                'calificacion': elemento.get('calificacion', 'Satisfactorio'),
+                'observacion': elemento.get('observacion', '')
             })
         return elementos_procesados
     

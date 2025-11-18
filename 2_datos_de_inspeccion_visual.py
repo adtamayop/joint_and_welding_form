@@ -214,10 +214,15 @@ for fase in fases_items:
         )
         aplica_val = st.session_state.tabla_fases_2_1[idx]["aplica"]
         if aplica_val == "Aplica":
+            # Obtener el resultado actual y validar que esté en las opciones disponibles
+            resultado_actual = fila.get("resultado", "Satisfactorio")
+            if resultado_actual not in opciones_resultado:
+                resultado_actual = "Satisfactorio"
+            
             st.session_state.tabla_fases_2_1[idx]["resultado"] = c3.selectbox(
                 f"Resultado para {fila['item']}",
                 options=opciones_resultado,
-                index=opciones_resultado.index(fila.get("resultado", "Satisfactorio")),
+                index=opciones_resultado.index(resultado_actual),
                 key=f"fase_resultado_2_1_{fase['fase']}_{i}",
                 label_visibility="collapsed"
             )
@@ -238,6 +243,9 @@ st.write("---")
 
 # Sección 3: Elementos Inspeccionados
 st.subheader("Elementos Inspeccionados")
+
+# Mensaje informativo sobre la herencia
+st.info("💡 **Nota importante:** Los elementos que agregues aquí serán heredados automáticamente por los módulos de Líquidos Penetrantes y Partículas Magnéticas. Cada módulo podrá editar sus propios elementos de forma independiente.")
 
 # Inicializar el estado de la tabla de elementos si no existe
 if "tabla_elementos_2_1" not in st.session_state:
@@ -333,6 +341,9 @@ st.write("---")
 
 # Sección 4: Esquema y Detalles
 st.subheader("Esquema y Detalles")
+
+# Mensaje informativo sobre la herencia
+st.info("💡 **Nota importante:** El esquema que subas aquí será heredado automáticamente por los otros módulos de inspección (Líquidos Penetrantes, Partículas Magnéticas y Ultrasonido). Cada módulo recibirá una copia independiente que podrá modificar sin afectar al esquema original ni a los esquemas de otros módulos.")
 
 # Inicializar el estado global del esquema
 esquema_global = get_esquema_elementos_global()
@@ -488,6 +499,7 @@ if st.button("Guardar Datos"):
         "elementos_inspeccionados": st.session_state.tabla_elementos_2_1,
         "esquema": [
             {
+                "archivo": img["archivo"],
                 "nombre": img["nombre"],
                 "comentario": img["comentario"]
             }

@@ -240,6 +240,31 @@ for detalle in ["PENETRANTE", "EMULSIFICANTE", "LIMPIADOR", "REVELADOR"]:
 # Sección 3: Normas para Procedimientos y Métodos de Aplicación
 st.subheader("Normas para Procedimientos y Métodos de Aplicación")
 
+# Inicializar estándares ASTM en session_state si no existen
+if "estandares_astm_pt" not in st.session_state:
+    st.session_state.estandares_astm_pt = [
+        "ASTM E 165: Standard Test Method for Liquid Penetrant Examination",
+        "ASTM E 1417: Standard Practice for Liquid Penetrant Examination"
+    ]
+
+# Campo para estándares ASTM
+st.markdown("**ESTÁNDARES ASTM:**")
+astm_e165 = st.text_input(
+    "ASTM E 165:",
+    value=st.session_state.estandares_astm_pt[0] if len(st.session_state.estandares_astm_pt) > 0 else "ASTM E 165: Standard Test Method for Liquid Penetrant Examination",
+    key="astm_e165_pt"
+)
+astm_e1417 = st.text_input(
+    "ASTM E 1417:",
+    value=st.session_state.estandares_astm_pt[1] if len(st.session_state.estandares_astm_pt) > 1 else "ASTM E 1417: Standard Practice for Liquid Penetrant Examination",
+    key="astm_e1417_pt"
+)
+
+# Actualizar session_state
+st.session_state.estandares_astm_pt = [astm_e165, astm_e1417]
+
+st.markdown("---")
+
 # Opciones para el tipo de líquidos penetrantes
 opciones_tipo = ["Visibles", "Fluorescentes"]
 tipo_seleccionado = st.selectbox("TIPO:", options=opciones_tipo, index=0)
@@ -304,15 +329,74 @@ for i, param in enumerate(st.session_state.parametros_operacion_pt):
 # Sección 5: Interpretación y Evaluación de Resultados
 st.subheader("Interpretación y Evaluación de Resultados")
 
-# --- Elementos Inspeccionados Independientes ---
+# --- Elementos Inspeccionados Heredados Automáticamente ---
 
 st.write("---")
 st.subheader("Elementos Inspeccionados")
 
-# Inicializar elementos del módulo actual
+# Heredar elementos de inspección visual automáticamente (solo nuevos elementos)
 elementos_key = "tabla_elementos_3_1"
+
+# Inicializar si no existe
 if elementos_key not in st.session_state:
     st.session_state[elementos_key] = []
+
+# Clave para rastrear los IDs de elementos ya heredados
+elementos_heredados_key = "elementos_heredados_ids_3_1"
+if elementos_heredados_key not in st.session_state:
+    st.session_state[elementos_heredados_key] = set()
+
+# Función para mapear calificaciones de visual a líquidos penetrantes
+def mapear_calificacion_visual_a_liquidos(calificacion_visual):
+    """Mapea la calificación de inspección visual al formato de líquidos penetrantes"""
+    cal_upper = str(calificacion_visual).upper().strip()
+    
+    # Mapeo de calificaciones
+    if "(C)" in cal_upper or "CONFORME" in cal_upper:
+        if "(R)" in cal_upper or "REPARACION" in cal_upper or "REPARACIÓN" in cal_upper:
+            # Conforme después de reparación -> Satisfactorio (ya que no hay equivalente exacto)
+            return "Satisfactorio"
+        else:
+            return "Satisfactorio"
+    elif "(NC)" in cal_upper or "NO CONFORME" in cal_upper:
+        return "No Satisfactorio"
+    elif "(RI)" in cal_upper or "REINSPECCIONAR" in cal_upper or "RE INSPECCIONAR" in cal_upper:
+        return "Fuera de Alcance"  # O podría ser "Satisfactorio" dependiendo de la lógica
+    else:
+        # Por defecto, mapear a Satisfactorio
+        return "Satisfactorio"
+
+# Sincronizar solo nuevos elementos de inspección visual
+if "tabla_elementos_2_1" in st.session_state and st.session_state.tabla_elementos_2_1:
+    elementos_nuevos = 0
+    for elemento in st.session_state.tabla_elementos_2_1:
+        # Crear un ID único para cada elemento basado en su número y descripción
+        elemento_id = f"{elemento['numero']}_{elemento['descripcion']}"
+        
+        # Solo agregar si no ha sido heredado antes
+        if elemento_id not in st.session_state[elementos_heredados_key]:
+            # Mapear la calificación de visual a líquidos penetrantes
+            calificacion_mapeada = mapear_calificacion_visual_a_liquidos(elemento.get("calificacion", "(C) Conforme"))
+            
+            # Crear una copia independiente del elemento
+            elemento_copia = {
+                "numero": elemento["numero"],
+                "descripcion": elemento["descripcion"],
+                "indicacion": elemento["indicacion"],
+                "calificacion": calificacion_mapeada,  # Mapear la calificación original
+                "observacion": elemento["observacion"]
+            }
+            st.session_state[elementos_key].append(elemento_copia)
+            st.session_state[elementos_heredados_key].add(elemento_id)
+            elementos_nuevos += 1
+    
+    if elementos_nuevos > 0:
+        st.success(f"✅ {elementos_nuevos} elemento(s) nuevo(s) heredado(s) de Inspección Visual")
+    elif len(st.session_state[elementos_key]) > 0:
+        st.info(f"📋 Elementos actuales: {len(st.session_state[elementos_key])} (editables de forma independiente)")
+else:
+    if len(st.session_state[elementos_key]) == 0:
+        st.info("💡 No hay elementos en Inspección Visual para heredar. Los elementos aparecerán automáticamente cuando se agreguen en el módulo de Inspección Visual.")
 
 # Función para agregar una nueva fila
 def agregar_fila_elemento_pt():
@@ -326,7 +410,7 @@ def agregar_fila_elemento_pt():
     }
     st.session_state[elementos_key].append(nueva_fila)
 
-# Botón para agregar fila
+# Botón para agregar elemento
 if st.button("Agregar Elemento", key="agregar_elemento_pt"):
     agregar_fila_elemento_pt()
 
@@ -398,16 +482,82 @@ if "resultados_pt" not in st.session_state:
 # Sección 6: Esquema y Detalles
 st.subheader("Esquema y Detalles")
 
-# Obtener el esquema global heredado
-esquema_global = get_esquema_elementos_global()
+# Inicializar esquema del módulo actual
+esquema_key = "esquema_3_1"
+if esquema_key not in st.session_state:
+    # Heredar esquema de inspección visual si existe
+    esquema_global_original = get_esquema_elementos_global()
+    if esquema_global_original:
+        # Copiar esquema de inspección visual (herencia inicial)
+        st.session_state[esquema_key] = []
+        for img_info in esquema_global_original:
+            # Crear una copia independiente de la imagen
+            img_copia = {
+                "archivo": img_info["archivo"],
+                "nombre": img_info["nombre"],
+                "comentario": img_info["comentario"]
+            }
+            st.session_state[esquema_key].append(img_copia)
+        st.success(f"✅ Esquema heredado de Inspección Visual: {len(st.session_state[esquema_key])} imágenes")
+    else:
+        # Si no hay esquema en inspección visual, inicializar lista vacía
+        st.session_state[esquema_key] = []
+        st.info("💡 No hay esquema en Inspección Visual para heredar. Puedes agregar imágenes manualmente.")
 
-if len(esquema_global) == 0:
-    st.warning("⚠️ No hay esquema global cargado. Ve al módulo de Inspección Visual para subir imágenes del esquema.")
+# Cargar nuevas imágenes del esquema
+uploaded_files_esquema = st.file_uploader(
+    "Selecciona las imágenes del esquema de inspección (puedes subir múltiples)",
+    type=["png", "jpg", "jpeg"],
+    key="upload_esquema_pt",
+    accept_multiple_files=True
+)
+
+if uploaded_files_esquema:
+    if st.button("Agregar Imágenes al Esquema", key="agregar_esquema_pt"):
+        for file in uploaded_files_esquema:
+            nueva_imagen = {
+                "archivo": file,
+                "nombre": file.name,
+                "comentario": ""
+            }
+            st.session_state[esquema_key].append(nueva_imagen)
+        st.success(f"Se agregaron {len(uploaded_files_esquema)} imágenes al esquema")
+        st.rerun()
+
+# Botones para gestionar esquema
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Re-heredar de Inspección Visual", key="reheredar_esquema_pt"):
+        esquema_global_original = get_esquema_elementos_global()
+        if esquema_global_original:
+            # Limpiar esquema actual y re-heredar
+            st.session_state[esquema_key] = []
+            for img_info in esquema_global_original:
+                img_copia = {
+                    "archivo": img_info["archivo"],
+                    "nombre": img_info["nombre"],
+                    "comentario": img_info["comentario"]
+                }
+                st.session_state[esquema_key].append(img_copia)
+            st.success(f"✅ Esquema actualizado desde Inspección Visual: {len(st.session_state[esquema_key])} imágenes")
+            st.rerun()
+        else:
+            st.warning("⚠️ No hay esquema en Inspección Visual para heredar.")
+
+with col2:
+    if st.button("Limpiar Esquema", key="limpiar_esquema_pt"):
+        st.session_state[esquema_key] = []
+        st.success("✅ Esquema limpiado")
+        st.rerun()
+
+# Mostrar las imágenes del esquema
+if len(st.session_state[esquema_key]) == 0:
+    st.info("No hay esquema cargado todavía. Sube imágenes o hereda desde Inspección Visual.")
 else:
-    st.success(f"✅ Esquema Global Heredado: {len(esquema_global)} imágenes")
-    st.info("💡 Este esquema se hereda automáticamente del módulo de Inspección Visual.")
+    st.success(f"✅ Esquema de Líquidos Penetrantes: {len(st.session_state[esquema_key])} imágenes cargadas")
+    st.info("💡 Este esquema es independiente del módulo de Inspección Visual.")
     
-    for i, img_info in enumerate(esquema_global):
+    for i, img_info in enumerate(st.session_state[esquema_key]):
         col1, col2 = st.columns([1, 2])
         
         with col1:
@@ -415,10 +565,16 @@ else:
         
         with col2:
             st.write(f"**Archivo:** {img_info['nombre']}")
-            if img_info["comentario"]:
-                st.write(f"**Comentario:** {img_info['comentario']}")
-            else:
-                st.write("**Comentario:** Sin comentario")
+            nuevo_comentario = st.text_area(
+                "Comentario",
+                value=img_info["comentario"],
+                key=f"comentario_esquema_pt_{i}"
+            )
+            st.session_state[esquema_key][i]["comentario"] = nuevo_comentario
+            
+            if st.button("Eliminar imagen", key=f"eliminar_esquema_pt_{i}"):
+                st.session_state[esquema_key].pop(i)
+                st.rerun()
 
 detalle_resultados = st.text_area("DETALLE DE ELEMENTOS INSPECCIONADOS Y RESULTADOS:", "")
 
@@ -487,13 +643,7 @@ st.write("---")
 
 st.subheader("Datos finales (diccionario)")
 datos_finales = {
-    "imagenes": [
-        {
-            "nombre": img["nombre"],
-            "comentario": img["comentario"]
-        }
-        for img in st.session_state.imagenes_3_1
-    ],
+    "imagenes": st.session_state.imagenes_3_1,  # Incluir el objeto completo con archivo, nombre y comentario
     "resultados": st.session_state.resultados_pt,
     "esquema_elementos": [],  # Lista vacía por defecto
     "detalle_resultados": detalle_resultados,
@@ -509,13 +659,15 @@ if st.button("Guardar Datos", key="guardar_datos_pt"):
         "proceso": procesos_editados,
         "equipos": kit_seleccionado,
         "materiales": st.session_state.materiales_utilizados_pt,
+        "estandares_astm": st.session_state.estandares_astm_pt,
         "tipo": tipo,
         "metodo": metodo,
         "procedimiento": procedimiento,
         "pasos_procedimiento": pasos_procedimiento,
         "parametros": st.session_state.parametros_operacion_pt,
         "resultados": st.session_state.resultados_pt,
-        "esquema_elementos": [],  # Lista vacía por defecto
+        "elementos_inspeccionados": st.session_state[elementos_key],  # Agregar elementos inspeccionados
+        "esquema_elementos": st.session_state[esquema_key],  # Usar esquema independiente
         "detalle_resultados": detalle_resultados,
         "observaciones_generales": observaciones_generales,
         "registros_fotograficos": datos_finales["imagenes"]

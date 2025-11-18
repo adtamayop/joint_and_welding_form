@@ -7,7 +7,7 @@ from utils import (
     get_proceso_soldadura, get_tipo_soldadura, get_tipo_inspeccion,
     get_materiales_base_seleccionados, get_procesos_soldadura_seleccionados,
     get_tipos_soldadura_seleccionados, procesos_soldadura, tipos_soldadura,
-    get_esquema_elementos_global, get_datos_palpador
+    get_esquema_elementos_global, cargar_palpadores, get_frecuencias_palpadores
 )
 
 st.set_page_config(
@@ -158,50 +158,103 @@ if kit_seleccionado:
 # --- PALPADOR ---
 st.markdown("##### Palpador, Tipo y Método de Inspección")
 
-# Obtener datos del palpador desde el kit seleccionado
-datos_palpador = get_datos_palpador(kit_seleccionado, kits_disponibles)
+# Cargar palpadores disponibles desde CSV
+palpadores_disponibles = cargar_palpadores()
+frecuencias_palpadores = get_frecuencias_palpadores()
 
-if datos_palpador:
-    # Mostrar información del palpador cargada desde CSV
-    col1, col2, col3, col4 = st.columns(4)
+# Crear opciones para el selector con toda la información visible
+opciones_palpadores = [
+    f"{p['nombre']} | Tipo: {p['tipo']} | Ángulo: {p['angulo']}° | Dimensión: {p['dimension']} | Frecuencia: {p['frecuencia_default']} MHz | Calibración: {p['calibracion']}" 
+    for p in palpadores_disponibles
+]
+
+# Inicializar palpador seleccionado si no existe
+if "palpador_seleccionado_id" not in st.session_state:
+    st.session_state.palpador_seleccionado_id = palpadores_disponibles[0]['id'] if palpadores_disponibles else None
+
+# Selector de palpador
+if opciones_palpadores:
+    # Encontrar el índice del palpador actual
+    palpador_actual = next((p for p in palpadores_disponibles if p['id'] == st.session_state.palpador_seleccionado_id), palpadores_disponibles[0])
+    index_actual = next((i for i, p in enumerate(palpadores_disponibles) if p['id'] == st.session_state.palpador_seleccionado_id), 0)
     
-    with col1:
-        st.write(f"**Tipo de Palpador:** {datos_palpador['tipo']}")
-    
-    with col2:
-        st.write(f"**Ángulo:** {datos_palpador['angulo']}°")
-    
-    with col3:
-        # Solo la frecuencia es editable
-        frecuencia_actual = float(datos_palpador['frecuencia']) if datos_palpador['frecuencia'] else 2.25
-        opciones_frecuencia = [1.0, 1.5, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
-        
-        # Inicializar frecuencia en session_state si no existe
-        if "palpador_frecuencia_editada" not in st.session_state:
-            st.session_state.palpador_frecuencia_editada = frecuencia_actual
-        
-        frecuencia_seleccionada = st.selectbox(
-            "**Frecuencia (MHz):**",
-            options=opciones_frecuencia,
-            index=opciones_frecuencia.index(st.session_state.palpador_frecuencia_editada) if st.session_state.palpador_frecuencia_editada in opciones_frecuencia else 3,
-            help="Frecuencia del palpador en MHz (1.0 a 6.0 MHz, incrementos de 0.5)"
-        )
-        st.session_state.palpador_frecuencia_editada = frecuencia_seleccionada
-    
-    with col4:
-        st.write(f"**Dimensión:** {datos_palpador['dimension']}")
-    
-    # Construir string para guardar
-    palpador = (
-        f"Tipo: {datos_palpador['tipo']}\n"
-        f"Ángulo: {datos_palpador['angulo']}°\n"
-        f"Frecuencia: {frecuencia_seleccionada} MHz\n"
-        f"Dimensión: {datos_palpador['dimension']}"
+    palpador_seleccionado_display = st.selectbox(
+        "**Seleccionar Palpador:**",
+        options=opciones_palpadores,
+        index=index_actual,
+        help="Selecciona el palpador a utilizar en la inspección"
     )
     
+    # Extraer el nombre del palpador de la opción seleccionada (antes del primer "|")
+    palpador_seleccionado_nombre = palpador_seleccionado_display.split(" | ")[0]
+    
+    # Obtener el palpador completo seleccionado
+    palpador_seleccionado = next((p for p in palpadores_disponibles if p['nombre'] == palpador_seleccionado_nombre), None)
+    
+    if palpador_seleccionado:
+        st.session_state.palpador_seleccionado_id = palpador_seleccionado['id']
+        
+        # Mostrar información del palpador en columnas
+        col1, col2, col3, col4, col5 = st.columns(5)
+        
+        with col1:
+            st.info(f"**Tipo:** {palpador_seleccionado['tipo']}")
+        
+        with col2:
+            st.info(f"**Ángulo:** {palpador_seleccionado['angulo']}°")
+        
+        with col3:
+            st.info(f"**Dimensión:** {palpador_seleccionado['dimension']}")
+        
+        with col4:
+            st.info(f"**Calibración:** {palpador_seleccionado['calibracion']}")
+        
+        with col5:
+            # Frecuencia editable por palpador
+            palpador_id = palpador_seleccionado['id']
+            
+            # Inicializar frecuencia para este palpador si no existe
+            if palpador_id not in frecuencias_palpadores:
+                frecuencias_palpadores[palpador_id] = float(palpador_seleccionado['frecuencia_default'])
+            
+            opciones_frecuencia = [1.0, 1.5, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
+            
+            # Asegurar que la frecuencia actual esté en las opciones
+            frecuencia_actual = frecuencias_palpadores[palpador_id]
+            if frecuencia_actual not in opciones_frecuencia:
+                frecuencia_actual = float(palpador_seleccionado['frecuencia_default'])
+            
+            try:
+                index_frecuencia = opciones_frecuencia.index(frecuencia_actual)
+            except ValueError:
+                index_frecuencia = 3  # Default a 2.25 MHz
+            
+            frecuencia_seleccionada = st.selectbox(
+                "**Frecuencia (MHz):**",
+                options=opciones_frecuencia,
+                index=index_frecuencia,
+                key=f"frecuencia_{palpador_id}",
+                help="Frecuencia del palpador (editable para cada palpador)"
+            )
+            
+            # Guardar la frecuencia editada
+            frecuencias_palpadores[palpador_id] = frecuencia_seleccionada
+        
+        # Construir string para guardar con toda la información
+        palpador = (
+            f"Nombre: {palpador_seleccionado['nombre']}\n"
+            f"Tipo: {palpador_seleccionado['tipo']}\n"
+            f"Ángulo: {palpador_seleccionado['angulo']}°\n"
+            f"Frecuencia: {frecuencia_seleccionada} MHz\n"
+            f"Dimensión: {palpador_seleccionado['dimension']}\n"
+            f"Calibración: {palpador_seleccionado['calibracion']}"
+        )
+    else:
+        st.error("⚠️ No se pudo cargar la información del palpador seleccionado.")
+        palpador = "Error al cargar datos del palpador"
 else:
-    st.warning("⚠️ No se encontraron datos del palpador en el kit seleccionado.")
-    palpador = "Datos del palpador no disponibles"
+    st.warning("⚠️ No hay palpadores disponibles. Verifica el archivo config/palpadores.csv")
+    palpador = "No hay palpadores disponibles"
 
 # Sección 2: Materiales y Procedimientos
 st.subheader("Materiales y Procedimientos")
@@ -445,16 +498,82 @@ juntas = st.number_input(
 # Sección 5: Detalles y Esquema
 st.subheader("Detalles y Esquema")
 
-# Obtener el esquema global heredado
-esquema_global = get_esquema_elementos_global()
+# Inicializar esquema del módulo actual
+esquema_key = "esquema_5_1"
+if esquema_key not in st.session_state:
+    # Heredar esquema de inspección visual si existe
+    esquema_global_original = get_esquema_elementos_global()
+    if esquema_global_original:
+        # Copiar esquema de inspección visual (herencia inicial)
+        st.session_state[esquema_key] = []
+        for img_info in esquema_global_original:
+            # Crear una copia independiente de la imagen
+            img_copia = {
+                "archivo": img_info["archivo"],
+                "nombre": img_info["nombre"],
+                "comentario": img_info["comentario"]
+            }
+            st.session_state[esquema_key].append(img_copia)
+        st.success(f"✅ Esquema heredado de Inspección Visual: {len(st.session_state[esquema_key])} imágenes")
+    else:
+        # Si no hay esquema en inspección visual, inicializar lista vacía
+        st.session_state[esquema_key] = []
+        st.info("💡 No hay esquema en Inspección Visual para heredar. Puedes agregar imágenes manualmente.")
 
-if len(esquema_global) == 0:
-    st.warning("⚠️ No hay esquema global cargado. Ve al módulo de Inspección Visual para subir imágenes del esquema.")
+# Cargar nuevas imágenes del esquema
+uploaded_files_esquema = st.file_uploader(
+    "Selecciona las imágenes del esquema de inspección (puedes subir múltiples)",
+    type=["png", "jpg", "jpeg"],
+    key="upload_esquema_ut",
+    accept_multiple_files=True
+)
+
+if uploaded_files_esquema:
+    if st.button("Agregar Imágenes al Esquema", key="agregar_esquema_ut"):
+        for file in uploaded_files_esquema:
+            nueva_imagen = {
+                "archivo": file,
+                "nombre": file.name,
+                "comentario": ""
+            }
+            st.session_state[esquema_key].append(nueva_imagen)
+        st.success(f"Se agregaron {len(uploaded_files_esquema)} imágenes al esquema")
+        st.rerun()
+
+# Botones para gestionar esquema
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Re-heredar de Inspección Visual", key="reheredar_esquema_ut"):
+        esquema_global_original = get_esquema_elementos_global()
+        if esquema_global_original:
+            # Limpiar esquema actual y re-heredar
+            st.session_state[esquema_key] = []
+            for img_info in esquema_global_original:
+                img_copia = {
+                    "archivo": img_info["archivo"],
+                    "nombre": img_info["nombre"],
+                    "comentario": img_info["comentario"]
+                }
+                st.session_state[esquema_key].append(img_copia)
+            st.success(f"✅ Esquema actualizado desde Inspección Visual: {len(st.session_state[esquema_key])} imágenes")
+            st.rerun()
+        else:
+            st.warning("⚠️ No hay esquema en Inspección Visual para heredar.")
+
+with col2:
+    if st.button("Limpiar Esquema", key="limpiar_esquema_ut"):
+        st.session_state[esquema_key] = []
+        st.success("✅ Esquema limpiado")
+        st.rerun()
+
+# Mostrar las imágenes del esquema
+if len(st.session_state[esquema_key]) == 0:
+    st.info("No hay esquema cargado todavía. Sube imágenes o hereda desde Inspección Visual.")
 else:
-    st.success(f"✅ Esquema Global Heredado: {len(esquema_global)} imágenes")
-    st.info("💡 Este esquema se hereda automáticamente del módulo de Inspección Visual.")
+    st.success(f"✅ Esquema de Ultrasonido: {len(st.session_state[esquema_key])} imágenes cargadas")
+    st.info("💡 Este esquema es independiente del módulo de Inspección Visual.")
     
-    for i, img_info in enumerate(esquema_global):
+    for i, img_info in enumerate(st.session_state[esquema_key]):
         col1, col2 = st.columns([1, 2])
         
         with col1:
@@ -462,10 +581,16 @@ else:
         
         with col2:
             st.write(f"**Archivo:** {img_info['nombre']}")
-            if img_info["comentario"]:
-                st.write(f"**Comentario:** {img_info['comentario']}")
-            else:
-                st.write("**Comentario:** Sin comentario")
+            nuevo_comentario = st.text_area(
+                "Comentario",
+                value=img_info["comentario"],
+                key=f"comentario_esquema_ut_{i}"
+            )
+            st.session_state[esquema_key][i]["comentario"] = nuevo_comentario
+            
+            if st.button("Eliminar imagen", key=f"eliminar_esquema_ut_{i}"):
+                st.session_state[esquema_key].pop(i)
+                st.rerun()
 
 detalle_resultados = st.text_area("DETALLE DE ELEMENTOS INSPECCIONADOS Y RESULTADOS:", "")
 
@@ -558,7 +683,7 @@ if st.button("Guardar Datos", key="guardar_datos_ut"):
         "elementos_inspeccionados": st.session_state[elementos_key],
         "juntas": juntas,
         "detalle_resultados": detalle_resultados,
-        "esquema_inspeccion": esquema_global,
+        "esquema_inspeccion": st.session_state[esquema_key],  # Usar esquema independiente
         "observaciones_generales": observaciones_generales,
         "registros_fotograficos": datos_finales["imagenes"]
     } 

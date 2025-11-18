@@ -16,12 +16,31 @@ class ReporteUltrasonido:
     
     def extraer_datos_proyecto(self) -> Dict[str, Any]:
         """Extrae datos del proyecto"""
+        from utils import generar_numero_informe
+        
         if 'datos_proyecto' in st.session_state:
-            return st.session_state['datos_proyecto']
+            dp = st.session_state['datos_proyecto']
+            # Generar número de informe para ultrasonido (offset 3)
+            numero_orden = dp.get('numero_orden', '1234')
+            consecutivo_inicial = dp.get('consecutivo_inicial', '100')
+            fecha_obj = dp.get('fecha_obj', datetime.now())
+            year = fecha_obj.year if hasattr(fecha_obj, 'year') else datetime.now().year
+            numero_informe = generar_numero_informe(numero_orden, consecutivo_inicial, year, 3)
+            
+            dp_copy = dp.copy()
+            dp_copy['numero_informe'] = numero_informe
+            return dp_copy
+            
         elif 'bloque_1' in st.session_state:
             bloque_1 = st.session_state['bloque_1']
+            numero_orden = bloque_1.get('numero_orden', '1234')
+            consecutivo_inicial = bloque_1.get('consecutivo_inicial', '100')
+            fecha = bloque_1.get('fecha', datetime.now())
+            year = fecha.year if hasattr(fecha, 'year') else datetime.now().year
+            numero_informe = generar_numero_informe(numero_orden, consecutivo_inicial, year, 3)
+            
             return {
-                'numero_informe': bloque_1.get('reporte_no', 'T1234I1005'),
+                'numero_informe': numero_informe,
                 'fecha': bloque_1.get('fecha', datetime.now().strftime('%d/%m/%Y')),
                 'cliente': bloque_1.get('cliente', 'Cliente'),
                 'proyecto': bloque_1.get('proyecto', 'Proyecto'),
@@ -32,7 +51,7 @@ class ReporteUltrasonido:
             }
         else:
             return {
-                'numero_informe': 'T1234I1005',
+                'numero_informe': 'T1234I1035',
                 'fecha': datetime.now().strftime('%d/%m/%Y'),
                 'cliente': 'Cliente',
                 'proyecto': 'Proyecto',

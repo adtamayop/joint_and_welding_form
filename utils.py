@@ -185,6 +185,27 @@ def cargar_normas():
         st.error(f"Error al cargar la lista de normas: {str(e)}")
         return ["AWS D1.1 2020"]  # Valor por defecto en caso de error
 
+def cargar_palpadores():
+    """Carga la configuración de palpadores desde el archivo CSV."""
+    try:
+        df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'config', 'palpadores.csv'))
+        return df.to_dict(orient='records')
+    except Exception as e:
+        st.error(f"Error al cargar la configuración de palpadores: {str(e)}")
+        return []
+
+def get_palpador_seleccionado():
+    """Obtiene el palpador seleccionado desde el estado de la sesión."""
+    if "palpador_seleccionado" not in st.session_state:
+        st.session_state.palpador_seleccionado = None
+    return st.session_state.palpador_seleccionado
+
+def get_frecuencias_palpadores():
+    """Obtiene las frecuencias editables de cada palpador desde el estado de la sesión."""
+    if "frecuencias_palpadores" not in st.session_state:
+        st.session_state.frecuencias_palpadores = {}
+    return st.session_state.frecuencias_palpadores
+
 def get_esquema_elementos_global():
     """Obtiene el esquema de elementos inspeccionados global desde el estado de la sesión."""
     if "esquema_elementos_global" not in st.session_state:
@@ -203,5 +224,57 @@ def get_datos_palpador(kit_seleccionado, kits_disponibles):
                 'dimension': kit.get('palpador_dimension', '')
             }
     return None
+
+def generar_numero_informe(orden, consecutivo, year=None, offset=0):
+    """
+    Genera un número de informe según el formato:
+    T+orden+I+consecutivo(3 dígitos)+último dígito del año
+    
+    Args:
+        orden: Número de orden (sin padding)
+        consecutivo: Número consecutivo base (se convertirá a 3 dígitos)
+        year: Año (opcional, por defecto usa el año actual)
+        offset: Incremento al consecutivo (0 para visual, 1 para líquidos, 2 para partículas, 3 para UT)
+    
+    Returns:
+        str: Número de informe formateado. Ejemplo: T209I4625
+    """
+    from datetime import datetime
+    
+    if year is None:
+        year = datetime.now().year
+    
+    # Convertir a enteros y validar
+    try:
+        orden_int = int(orden)
+        consecutivo_int = int(consecutivo) + offset
+    except (ValueError, TypeError):
+        st.error(f"Error: orden y consecutivo deben ser números válidos")
+        return ""
+    
+    # Formatear: orden sin padding, consecutivo con 3 dígitos
+    orden_str = str(orden_int)
+    consecutivo_str = str(consecutivo_int).zfill(3)
+    year_digit = str(year)[-1]
+    
+    return f"T{orden_str}I{consecutivo_str}{year_digit}"
+
+def obtener_consecutivo_por_tipo(tipo_inspeccion):
+    """
+    Obtiene el offset del consecutivo según el tipo de inspección.
+    
+    Args:
+        tipo_inspeccion: Tipo de inspección ('visual', 'liquidos', 'particulas', 'ultrasonido')
+    
+    Returns:
+        int: Offset para el consecutivo
+    """
+    offsets = {
+        'visual': 0,
+        'liquidos_penetrantes': 1,
+        'particulas_magneticas': 2,
+        'ultrasonido': 3
+    }
+    return offsets.get(tipo_inspeccion, 0)
 
  

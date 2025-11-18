@@ -238,14 +238,27 @@ with col2:
 # Sección 8: Elementos Inspeccionados
 st.subheader("Elementos Inspeccionados")
 
-# Inicializar elementos del módulo actual
+# Heredar elementos de inspección visual automáticamente (solo nuevos elementos)
 elementos_key = "tabla_elementos_4_1"
+
+# Inicializar si no existe
 if elementos_key not in st.session_state:
-    # Heredar elementos de inspección visual si existen
-    if "tabla_elementos_2_1" in st.session_state and st.session_state.tabla_elementos_2_1:
-        # Copiar elementos de inspección visual (herencia inicial)
-        st.session_state[elementos_key] = []
-        for elemento in st.session_state.tabla_elementos_2_1:
+    st.session_state[elementos_key] = []
+
+# Clave para rastrear los IDs de elementos ya heredados
+elementos_heredados_key = "elementos_heredados_ids_4_1"
+if elementos_heredados_key not in st.session_state:
+    st.session_state[elementos_heredados_key] = set()
+
+# Sincronizar solo nuevos elementos de inspección visual
+if "tabla_elementos_2_1" in st.session_state and st.session_state.tabla_elementos_2_1:
+    elementos_nuevos = 0
+    for elemento in st.session_state.tabla_elementos_2_1:
+        # Crear un ID único para cada elemento basado en su número y descripción
+        elemento_id = f"{elemento['numero']}_{elemento['descripcion']}"
+        
+        # Solo agregar si no ha sido heredado antes
+        if elemento_id not in st.session_state[elementos_heredados_key]:
             # Crear una copia independiente del elemento
             elemento_copia = {
                 "numero": elemento["numero"],
@@ -255,11 +268,16 @@ if elementos_key not in st.session_state:
                 "observacion": elemento["observacion"]
             }
             st.session_state[elementos_key].append(elemento_copia)
-        st.success(f"✅ Elementos heredados de Inspección Visual: {len(st.session_state[elementos_key])} elementos")
-    else:
-        # Si no hay elementos en inspección visual, inicializar lista vacía
-        st.session_state[elementos_key] = []
-        st.info("💡 No hay elementos en Inspección Visual para heredar. Puedes agregar elementos manualmente.")
+            st.session_state[elementos_heredados_key].add(elemento_id)
+            elementos_nuevos += 1
+    
+    if elementos_nuevos > 0:
+        st.success(f"✅ {elementos_nuevos} elemento(s) nuevo(s) heredado(s) de Inspección Visual")
+    elif len(st.session_state[elementos_key]) > 0:
+        st.info(f"📋 Elementos actuales: {len(st.session_state[elementos_key])} (editables de forma independiente)")
+else:
+    if len(st.session_state[elementos_key]) == 0:
+        st.info("💡 No hay elementos en Inspección Visual para heredar. Los elementos aparecerán automáticamente cuando se agreguen en el módulo de Inspección Visual.")
 
 # Función para agregar una nueva fila
 def agregar_fila_elemento_mt():
@@ -273,30 +291,9 @@ def agregar_fila_elemento_mt():
     }
     st.session_state[elementos_key].append(nueva_fila)
 
-# Botones para gestionar elementos
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("Agregar Elemento", key="agregar_elemento_mt"):
-        agregar_fila_elemento_mt()
-
-with col2:
-    if st.button("Re-heredar de Inspección Visual", key="reheredar_elementos_mt"):
-        if "tabla_elementos_2_1" in st.session_state and st.session_state.tabla_elementos_2_1:
-            # Limpiar elementos actuales y re-heredar
-            st.session_state[elementos_key] = []
-            for elemento in st.session_state.tabla_elementos_2_1:
-                elemento_copia = {
-                    "numero": elemento["numero"],
-                    "descripcion": elemento["descripcion"],
-                    "indicacion": elemento["indicacion"],
-                    "calificacion": "Satisfactorio",
-                    "observacion": elemento["observacion"]
-                }
-                st.session_state[elementos_key].append(elemento_copia)
-            st.success(f"✅ Elementos actualizados desde Inspección Visual: {len(st.session_state[elementos_key])} elementos")
-            st.rerun()
-        else:
-            st.warning("⚠️ No hay elementos en Inspección Visual para heredar.")
+# Botón para agregar elemento
+if st.button("Agregar Elemento", key="agregar_elemento_mt"):
+    agregar_fila_elemento_mt()
 
 # Opciones para la calificación
 opciones_calificacion = ["Satisfactorio", "No Satisfactorio", "Fuera de Alcance"]
