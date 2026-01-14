@@ -1,0 +1,5 @@
+id,nombre,descripcion,componentes,tipo_inspeccion,marca,modelo,escala,grado_calibracion,palpador_tipo,palpador_angulo,palpador_frecuencia,palpador_dimension
+kit_vt,Kit de Inspección Visual,Equipo básico de inspección visual,Calibrador|Linterna|Lupa 10x|Regla metálica|Cinta métrica,VT,,,,,
+kit_pt,Kit de Líquidos Penetrantes,Equipo completo para inspección por líquidos penetrantes,Limpiador|Penetrante|Revelador|Lámpara UV|Guantes|Toallas desechables,PT,,,,,
+kit_mt,Kit de Partículas Magnéticas,Equipo para inspección por partículas magnéticas,Yugo electromagnético|Partículas magnéticas|Contraste|Lámpara UV|Guantes,MT,,,,,
+kit_ut,Kit de Ultrasonido,Equipo para inspección por ultrasonido,Equipo UT|Sondas|Bloques de calibración|Acoplante|Cables,UT,SIUI,CTS-9006,1:1,43-44,Angular,70,2.25,0.5 x 0.5 pulgadas
