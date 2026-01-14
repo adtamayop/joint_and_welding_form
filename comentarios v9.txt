@@ -1,0 +1,13 @@
+FORM:
+1.  
+
+INFORMES:
+1. Poner el logo de la empresa en todas las páginas en la parte superior izquierda
+2. En los nombres clientes del header, compactarlo para que no se sobreponga, y si se pasa que cree otra línea
+3. Lista de fases de inspección debería de tener la abreviaciones que tenemos
+4. Si no aplica, solo debe de aparecer una vez en el informe
+5. Si aplica, solo que aparezca solo la S de satisfactorio o la NS de no satisfactorio
+6. Revisar que queden los esquemas y registro fotográfico
+7. Elementos inspeccionados va a tener en las columnas de calificación las cosas de colores
+8. En las firmas debe de tener el nombre y las firmas y solo en la última páginas
+9. Lo que va en el pie de página 

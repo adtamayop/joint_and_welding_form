@@ -1,0 +1,11 @@
+id,nombre,tipo,angulo,dimension,frecuencia_default,calibracion
+palpador_1,Palpador Angular 45°,Angular,45,10 x 10 mm,2.25,±1 dB
+palpador_2,Palpador Angular 60°,Angular,60,10 x 10 mm,2.25,±1 dB
+palpador_3,Palpador Angular 70°,Angular,70,10 x 10 mm,2.25,±1 dB
+palpador_4,Palpador Recto,Recto,0,10 x 10 mm,5.0,±1 dB
+palpador_5,Palpador Angular 45° 12x12,Angular,45,12 x 12 mm,2.0,±1 dB
+palpador_6,Palpador Angular 60° 12x12,Angular,60,12 x 12 mm,2.0,±1 dB
+palpador_7,Palpador Recto 20mm,Recto,0,20 x 20 mm,4.0,±1 dB
+
+
+

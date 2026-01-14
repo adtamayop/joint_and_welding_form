@@ -1,0 +1,156 @@
+Notas
+Informe de visual:
+
+✅ 1. Crear un archivo con la lista de ingenieros como se hace con el material base 
+
+Elaboró: lista de ingenieros:
+
+•⁠  ⁠Conrado Giraldo L.
+•⁠  ⁠Juan Esteban Velasquez 
+•⁠  ⁠Jorge Uribe
+•⁠  ⁠Sergio Prens
+•⁠  ⁠Eduard Sanchez
+•⁠  ⁠Andrés López 
+•⁠  ⁠Mauricio Jarro
+•⁠  ⁠Oscar Saavedra 
+•⁠  ⁠Juan Pablo Torres 
+•⁠  ⁠Miguel López
+
+
+
+✅ 2. Hacer esto mimso de llevar la información a archivos externos
+
+ Norma Global:
+AWS D1.1 2020
+AWWA C206 / AWS D1.1
+AWS D1.2 2014
+AWS D1.3 2018
+AWS D1.4 2005
+AASHTO/AWS D1.5 2020
+AWS D1.6 2017
+AWS D1.7 2010
+AWS D1.8 2016
+AWS D1.9 2015
+AWS D14.3 2019
+ASME SECCIÓN V 2019
+ASME SECCIÓN IX 2019
+ASME B31.1 2020
+ASME B31.3 2010
+ASME B31.4 2022
+ASME B31.5 2022
+ASME B31.8 2010
+ASME B31.9 2008
+ASME B31G 2009
+ASTM E 186 2020
+API 1104
+NSR-10
+NTC
+
+❌  3. Firmas: En vez escribir solo el nombre, que permita subir también la imagen de la firma escaneada de la persona.
+
+✅ 4. Cambiar como se ven las fechas a Día (en número) / Mes (primeras letras) / Año (en número)
+
+
+Informe de PT:
+
+Caambiar esto a lista desplegable con estos valores en el modulo de liquidos penetrantes, en este bloque
+
+✅ 2. Tipo: Hay 2 tipos de liquidos penetrantes:
+- Visibles y Fluorecentes
+
+✅ 3. Los metodos de liquidos son 3:
+A: Lavables con agua
+B: Postemulsificantes
+c: Eliminables con Disolvente
+
+✅ 4. Parametros de Operacion: 
+- el tiempo de permanencia podria ser un input de tipo number se establezca por minutos(en html se puede hacer con el atributo de step)
+
+✅ 5. procedimiento del inicio del informe debe de poder ser editable poder editar el procedimiento ya que hay varios procedimientos de liquidos (revisar si cuando se llena cqueda en el informe)
+
+Informe de Particulas Magneticas
+
+-
+
+❌ 1. Materiales Utilizados:
+los materiales a usar no pueden ser especificamente humedas visibles ya que hay varios tipos y metodos, hay secas y humedas, visibles o no fluorecesntes
+
+✅ 2. poder editar el procedimiento ya que hay varios procedimientos de particulas
+
+informe de ultrasonido
+
+✅ - Cunado hay particulas magneticas se inspeccionan elementos de la inspección visual, pero no todos
+✅ - Se hereda elementos insepeccionados y esquemas y detalles (de visual) pero se tienenq ue poder editar
+- 
+
+el informe consta de 13 secciones
+
+✅ 1. Equipos Utilizados: 
+la informacion que debe de ir en equipos utilizados es: 
+- la marca del equipo (por defecto el que está en el informe de ejemplo)
+- el modelo (por defecto el que está en el informe de ejemplo)
+- la escala (por defecto el que está en el informe de ejemplo)
+- grado de calibracion por defecto el que está en el informe de ejemplo)
+
+✅  2. Palpador, tipo y metodo de inspeccion: (que se cargue desde el csv y al que se cargue solo se le pueda modificar la frecuencia)
+2.1 los datos del palpador a preguntar son:
+- el tipo de paplpador
+- el angulo
+- la frecuencia (este es el que falta) Va de 1 a 6, sube de 0.5 y son MHz.
+- la dimension
+
+✅  2.2 tipo de inspección por ultrasonido:
+- Haz recto (Solo para palpador recto)
+- Haz angular (Solo para palpador angular)
+
+
+✅  2.3 Metodo:
+- A-scan 
+- B-scan, 
+
+✅  3. Soldadura 
+los datos de la soldadura son:
+- el proceso
+-  el paso 4xe (se calcula con una fórmula, pendiente, pero es bueno que se pueda editar)
+-  el medio paso P/2 (se calcula con una fórmula, pendiente, pero es bueno que se pueda editar)
+- 11xe el rango  111 (se calcula con una fórmula, pendiente, pero es bueno que se pueda editar)
+
+✅  4. Materiales
+los datos de los materiales son:
+- material base
+- espesor de m. base 11 (ideal que puedan ser más de uno, pero para cada uno se debe aplicar la fórmula) 
+- m. de aporte (DEBE IR EN TODOS, como en la inspección visual)
+- el acomplante usado CMC, Agua, Aceite
+
+5. norma y procedimiento:
+- normalmente la norma es AWS D1.1
+pero tambien hay opcion de que sea AWS D1.5, api, asme s.IX
+- el procedimiento se debe dejar editar ya que hay varios procedimientos de ultrasonido
+
+✅ 6. la seccion de juntas es para poner la cantidad de juntas que hay en la inspeccion
+
+7. la descripcion de los elementos inspeccionados
+
+9. la lista de elementos inspeccionados por ultrasonido debe ser una tabla en la que se pueda insertar informacion por filas con 13 columnas:
+
+1. descripcion de la junta
+2. # de junta
+3. ubicacion de la junta
+4. estampe
+5. decibeles (se divide en 4 columnas la calificacion de decibeles: A, B, C, D)
+6. Discontinuidad( tiene 4 columnas: distancia angular, profundidad de la discontinuidad, distancia sobre el eje y, distancia sobre el eje x)
+7. Evaluacion de la junta
+
+10. Observaciones generales de la inspeccion
+
+11. esquema de inspeccion
+
+12. registros fotograficos
+
+
+
+error a la hora de guardar los datos en liquidos penetratens y particulas magneticas
+
+lista de palpadores
+
+
