@@ -957,7 +957,7 @@ class ReporteInspeccionVisual:
     def _crear_leyenda_disconformidades(self, total_w):
         """
         Crea la leyenda de disconformidades y calificaciones según la imagen proporcionada.
-        Retorna una tabla con dos secciones: Convención de DISCONTINUIDAD y Calificación (CAL).
+        Retorna dos tablas apiladas: Convención de DISCONTINUIDAD y Calificación (CAL).
         """
         # Primera sección: Convención de DISCONTINUIDAD
         # Organizada en 3 columnas
@@ -1012,43 +1012,12 @@ class ReporteInspeccionVisual:
         color_no_conforme = colors.HexColor('#ff0400')  # Rojo no conforme
         color_re_inspeccionar = colors.HexColor('#feff01')  # Amarillo re inspeccionar
         
-        # Calcular número máximo de filas para alinear ambas secciones
-        max_filas = max(len(disconformidades_data) + 1, len(calificaciones_data) + 1)  # +1 por encabezado
-        
-        # Crear tabla con 4 columnas: CAL (izquierda) + 3 columnas de DISCONTINUIDAD
-        # Anchos: CAL ocupa ~30%, las otras 3 columnas se dividen el resto
-        cal_width = total_w * 0.3
-        discon_width = (total_w - cal_width) / 3.0
-        col_widths = [cal_width, discon_width, discon_width, discon_width]
-        
-        # Construir datos de la tabla
-        leyenda_data = []
-        
-        # Primera fila: encabezados
-        # "Convención de DISCONTINUIDAD:" ocupará las columnas 1, 2, 3 (SPAN)
-        leyenda_data.append(["Calificación (CAL)", "Convención de DISCONTINUIDAD:", "", ""])
-        
-        # Llenar filas combinando ambas secciones
-        for i in range(max_filas - 1):  # -1 porque ya tenemos el encabezado
-            cal_row = ""
-            if i < len(calificaciones_data):
-                cal_row = calificaciones_data[i][0] + " " + calificaciones_data[i][1]
-            
-            discon_row1 = ""
-            discon_row2 = ""
-            discon_row3 = ""
-            if i < len(disconformidades_data):
-                discon_row1 = disconformidades_data[i][0]
-                discon_row2 = disconformidades_data[i][1]
-                discon_row3 = disconformidades_data[i][2]
-            
-            leyenda_data.append([cal_row, discon_row1, discon_row2, discon_row3])
-        
-        # Crear tabla
-        t = Table(leyenda_data, colWidths=col_widths)
-        
-        # Estilos
-        style_list = [
+        # Tabla 1: Convención de DISCONTINUIDAD
+        discon_col_w = total_w / 3.0
+        discon_data = [["Convención de discontinuidad:", "", ""]]
+        discon_data.extend(disconformidades_data)
+        discon_table = Table(discon_data, colWidths=[discon_col_w] * 3)
+        discon_table.setStyle(TableStyle([
             ("GRID", (0,0), (-1,-1), 0.6, colors.black),
             ("FONT", (0,0), (-1,-1), "Helvetica", 7),
             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
@@ -1056,29 +1025,41 @@ class ReporteInspeccionVisual:
             ("RIGHTPADDING", (0,0), (-1,-1), 3),
             ("TOPPADDING", (0,0), (-1,-1), 2),
             ("BOTTOMPADDING", (0,0), (-1,-1), 2),
+            ("BACKGROUND", (0,0), (-1,0), colors.whitesmoke),
+            ("FONT", (0,0), (-1,0), "Helvetica-Bold", 7),
+            ("SPAN", (0,0), (2,0)),
+            ("ALIGN", (0,0), (2,0), "CENTER"),
+        ]))
+
+        # Tabla 2: Calificación (CAL) con una sola fila de estados
+        cal_col_w = total_w / 4.0
+        cal_row = [
+            calificaciones_data[0][0] + " " + calificaciones_data[0][1],
+            calificaciones_data[1][0] + " " + calificaciones_data[1][1],
+            calificaciones_data[2][0] + " " + calificaciones_data[2][1],
+            calificaciones_data[3][0] + " " + calificaciones_data[3][1],
         ]
-        
-        # Fondo gris para encabezados
-        style_list.append(("BACKGROUND", (0,0), (-1,0), colors.whitesmoke))
-        style_list.append(("FONT", (0,0), (-1,0), "Helvetica-Bold", 7))
-        
-        # Hacer que "Convención de DISCONTINUIDAD:" ocupe las columnas 1, 2, 3 y centrarlo
-        style_list.append(("SPAN", (1,0), (3,0)))
-        style_list.append(("ALIGN", (1,0), (3,0), "CENTER"))
-        
-        # Colores de fondo para calificaciones (columna 0, filas 1-4)
-        idx_c = 1
-        idx_cxr = 2
-        idx_nc = 3
-        idx_ri = 4
-        
-        style_list.append(("BACKGROUND", (0,idx_c), (0,idx_c), color_conforme))
-        style_list.append(("BACKGROUND", (0,idx_cxr), (0,idx_cxr), color_conforme_reparacion))
-        style_list.append(("BACKGROUND", (0,idx_nc), (0,idx_nc), color_no_conforme))
-        style_list.append(("BACKGROUND", (0,idx_ri), (0,idx_ri), color_re_inspeccionar))
-        
-        t.setStyle(TableStyle(style_list))
-        return t
+        cal_data = [["Calificación (CAL)", "", "", ""], cal_row]
+        cal_table = Table(cal_data, colWidths=[cal_col_w] * 4)
+        cal_table.setStyle(TableStyle([
+            ("GRID", (0,0), (-1,-1), 0.6, colors.black),
+            ("FONT", (0,0), (-1,-1), "Helvetica", 7),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+            ("LEFTPADDING", (0,0), (-1,-1), 3),
+            ("RIGHTPADDING", (0,0), (-1,-1), 3),
+            ("TOPPADDING", (0,0), (-1,-1), 2),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 2),
+            ("BACKGROUND", (0,0), (-1,0), colors.whitesmoke),
+            ("FONT", (0,0), (-1,0), "Helvetica-Bold", 7),
+            ("SPAN", (0,0), (3,0)),
+            ("ALIGN", (0,0), (3,0), "CENTER"),
+            ("BACKGROUND", (0,1), (0,1), color_conforme),
+            ("BACKGROUND", (1,1), (1,1), color_conforme_reparacion),
+            ("BACKGROUND", (2,1), (2,1), color_no_conforme),
+            ("BACKGROUND", (3,1), (3,1), color_re_inspeccionar),
+        ]))
+
+        return KeepTogether([discon_table, cal_table])
 
     def _section_text_box(self, title, text, total_w):
         rows = [text] if isinstance(text, str) else text
