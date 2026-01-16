@@ -465,7 +465,7 @@ class ReporteInspeccionVisual:
             
             # Estilo con alineación MIDDLE para que etiquetas y valores queden a la misma altura
             style_list = [
-                ("FONT", (0,0), (0,-1), "Helvetica", 9),  # Solo etiquetas
+                ("FONT", (0,0), (0,-1), "Helvetica-Bold", 9),  # Solo etiquetas
                 ("VALIGN", (0,0), (-1,-1), "MIDDLE"),  # Alineación central para etiquetas
                 ("VALIGN", (1,0), (1,-1), "MIDDLE"),  # Alineación central para valores (misma altura)
                 ("LINEBELOW", (1,0), (1,-1), 0.6, colors.black),
@@ -498,7 +498,7 @@ class ReporteInspeccionVisual:
             col_widths = [38*mm, 28*mm]  # Etiquetas más anchas, valores más estrechos pero suficientes
             t = Table(tbl, colWidths=col_widths, rowHeights=6*mm)  # Reducido para que quepa todo
             t.setStyle(TableStyle([
-                ("FONT", (0,0), (0,-1), "Helvetica", 9),  # Solo etiquetas
+                ("FONT", (0,0), (0,-1), "Helvetica-Bold", 9),  # Solo etiquetas
                 ("VALIGN", (0,0), (-1,-1), "MIDDLE"),  # Alineación central para etiquetas
                 ("VALIGN", (1,0), (1,-1), "MIDDLE"),  # Alineación central para valores (misma altura)
                 ("LINEBELOW", (1,0), (1,-1), 0.6, colors.black),
@@ -556,7 +556,7 @@ class ReporteInspeccionVisual:
                 is_last_page = canv.is_last_page(current_page)
         
         st_small = ParagraphStyle("small", fontName="Helvetica", fontSize=7, leading=8)
-        st_small_b = ParagraphStyle("small_b", parent=st_small, fontName="Helvetica-Bold", alignment=1)
+        st_small_b = ParagraphStyle("small_b", parent=st_small, fontName="Helvetica-Bold", fontSize=9, leading=10, alignment=1)
         
         cliente_nombre = enc.get("cliente", "Concreacero")
         
@@ -628,6 +628,13 @@ class ReporteInspeccionVisual:
             fontSize=9,
             leading=10
         )
+        style_label_center = ParagraphStyle(
+            name="FirmaLabelCenter",
+            fontName="Helvetica-Bold",
+            fontSize=9,
+            leading=10,
+            alignment=1  # CENTER
+        )
         style_name = ParagraphStyle(
             name="FirmaName",
             fontName="Helvetica",
@@ -637,8 +644,8 @@ class ReporteInspeccionVisual:
         style_company = ParagraphStyle(
             name="CompanyName",
             fontName="Helvetica-Bold",
-            fontSize=8,
-            leading=9,
+            fontSize=10,
+            leading=11,
             alignment=1  # CENTER
         )
         style_client = ParagraphStyle(
@@ -660,7 +667,7 @@ class ReporteInspeccionVisual:
         fila1 = [
             Paragraph("Elaboró:", style_label),
             Paragraph("Revisó:", style_label),
-            Paragraph(cliente_nombre, style_client)
+            Paragraph("Enviado A:", style_label_center)
         ]
         
         # Fila 2: Contenido
@@ -717,9 +724,10 @@ class ReporteInspeccionVisual:
         
         fila2 = [celda_elaboro, celda_reviso_completa, Paragraph("", style_name)]
         
-        # Fila 3: Nombre empresa (spanning columnas Elaboró y Revisó)
+        # Fila 3: Nombre empresa y cliente (al mismo nivel)
         empresa_text = Paragraph("Joint and Welding Ingenieros S.A.S.", style_company)
-        fila3 = [empresa_text, Paragraph("", style_name), Paragraph("", style_name)]
+        cliente_text = Paragraph(cliente_nombre, style_company)
+        fila3 = [empresa_text, Paragraph("", style_name), cliente_text]
         
         data = [fila1, fila2, fila3]
         # Alturas reducidas: fila de etiquetas más pequeña, fila de contenido más compacta
@@ -739,9 +747,12 @@ class ReporteInspeccionVisual:
             ("RIGHTPADDING", (0,0), (-1,-1), 3),
             ("TOPPADDING", (0,0), (-1,-1), 2),
             ("BOTTOMPADDING", (0,0), (-1,-1), 2),
+            # Centrar "Enviado A:" en la fila 1
+            ("ALIGN", (2,0), (2,0), "CENTER"),
             # Hacer que el nombre de la empresa ocupe las columnas 0 y 1 (Elaboró y Revisó)
             ("SPAN", (0,2), (1,2)),
             ("ALIGN", (0,2), (1,2), "CENTER"),
+            ("ALIGN", (2,2), (2,2), "CENTER"),  # Centrar el nombre del cliente
         ]))
         
         t.wrapOn(canv, w, 0)
@@ -924,10 +935,10 @@ class ReporteInspeccionVisual:
         cal_upper = str(calificacion).upper().strip()
         
         # Colores para calificaciones (mismos que en la leyenda)
-        color_conforme = colors.HexColor('#4CAF50')  # Verde más oscuro
-        color_conforme_reparacion = colors.HexColor('#98FB98')  # Verde más claro
-        color_no_conforme = colors.HexColor('#FF6B6B')  # Rojo
-        color_re_inspeccionar = colors.HexColor('#FFD700')  # Amarillo
+        color_conforme = colors.HexColor('#00b050')  # Verde conforme
+        color_conforme_reparacion = colors.HexColor('#96ce50')  # Verde conforme luego por reparación
+        color_no_conforme = colors.HexColor('#ff0400')  # Rojo no conforme
+        color_re_inspeccionar = colors.HexColor('#feff01')  # Amarillo re inspeccionar
         
         # Detectar el tipo de calificación
         # Orden importante: primero las más específicas
@@ -990,16 +1001,16 @@ class ReporteInspeccionVisual:
         # Segunda sección: Calificación (CAL)
         calificaciones_data = [
             ["C:", "Conforme"],
-            ["C(xR):", "Conforme luego x Reparación"],
+            ["C(xR):", "Conforme Luego de Reparación"],
             ["NC:", "No Conforme"],
             ["RI:", "Re Inspeccionar"],
         ]
         
         # Colores para calificaciones
-        color_conforme = colors.HexColor('#4CAF50')  # Verde más oscuro
-        color_conforme_reparacion = colors.HexColor('#98FB98')  # Verde más claro
-        color_no_conforme = colors.HexColor('#FF6B6B')  # Rojo
-        color_re_inspeccionar = colors.HexColor('#FFD700')  # Amarillo
+        color_conforme = colors.HexColor('#00b050')  # Verde conforme
+        color_conforme_reparacion = colors.HexColor('#96ce50')  # Verde conforme luego por reparación
+        color_no_conforme = colors.HexColor('#ff0400')  # Rojo no conforme
+        color_re_inspeccionar = colors.HexColor('#feff01')  # Amarillo re inspeccionar
         
         # Calcular número máximo de filas para alinear ambas secciones
         max_filas = max(len(disconformidades_data) + 1, len(calificaciones_data) + 1)  # +1 por encabezado
@@ -1154,13 +1165,13 @@ class ReporteInspeccionVisual:
 
         story = []
 
-        # 1. Procedimiento (Información General)
-        procedimiento_text = f"Procedimiento: {data.get('procedimiento', 'TLPR0025 - Inspección Visual - Rev. 1')}"
-        story.append(self._section_text_box("1. PROCEDIMIENTO:", procedimiento_text, total_w))
+        # 1. Normas
+        story.append(self._section_text_box("1. NORMAS PARA EL CRITERIO DE EVALUACIÓN:", data["seccion_1_normas"]["criterio"], total_w))
         story.append(Spacer(0, 6*mm))
 
-        # 2. Normas
-        story.append(self._section_text_box("2. NORMAS PARA EL CRITERIO DE EVALUACIÓN:", data["seccion_1_normas"]["criterio"], total_w))
+        # 2. Procedimiento (Información General)
+        procedimiento_text = f"Procedimiento: {data.get('procedimiento', 'TLPR0025 - Inspección Visual - Rev. 1')}"
+        story.append(self._section_text_box("2. PROCEDIMIENTO:", procedimiento_text, total_w))
         story.append(Spacer(0, 6*mm))
 
         # 3. Equipos
@@ -1441,8 +1452,8 @@ class ReporteInspeccionVisual:
         style_company = ParagraphStyle(
             name="CompanyName",
             fontName="Helvetica-Bold",
-            fontSize=8,
-            leading=9,
+            fontSize=10,
+            leading=11,
             alignment=1  # CENTER
         )
         style_client = ParagraphStyle(
