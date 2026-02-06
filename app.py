@@ -1,5 +1,9 @@
 import streamlit as st
 
+# Modo de prueba: mostrar solo el módulo de inspección visual en la navegación
+SOLO_REPORTE_VISUAL = True
+MODULO_VISUAL = "2_datos_de_inspeccion_visual.py"
+
 # Configuración inicial de páginas
 modulos_sidebar_titles = {
     "1_datos_del_proyecto.py": "Datos del Proyecto",
@@ -25,14 +29,27 @@ default_pages = {
     ],
 }
 
+if SOLO_REPORTE_VISUAL:
+    default_pages["Módulos"] = [
+        st.Page(MODULO_VISUAL, title=get_sidebar_title(MODULO_VISUAL)),
+    ]
+
 # Inicializar la configuración de páginas si no existe
 if "pages_config" not in st.session_state:
-    st.session_state.pages_config = {
-        "modulos": [
-            st.Page("2_datos_de_inspeccion_visual.py", title=get_sidebar_title("2_datos_de_inspeccion_visual.py")),
-            st.Page("3_datos_de_inspeccion_de_liquidos_penetrantes.py", title=get_sidebar_title("3_datos_de_inspeccion_de_liquidos_penetrantes.py")),
+    modulos_iniciales = [
+        st.Page("2_datos_de_inspeccion_visual.py", title=get_sidebar_title("2_datos_de_inspeccion_visual.py")),
+        st.Page("3_datos_de_inspeccion_de_liquidos_penetrantes.py", title=get_sidebar_title("3_datos_de_inspeccion_de_liquidos_penetrantes.py")),
+    ]
+    if SOLO_REPORTE_VISUAL:
+        modulos_iniciales = [
+            st.Page(MODULO_VISUAL, title=get_sidebar_title(MODULO_VISUAL)),
         ]
-    }
+    st.session_state.pages_config = {"modulos": modulos_iniciales}
+elif SOLO_REPORTE_VISUAL:
+    # Salvaguarda: forzar navegación visual-only incluso si la sesión tenía otros módulos
+    st.session_state.pages_config["modulos"] = [
+        st.Page(MODULO_VISUAL, title=get_sidebar_title(MODULO_VISUAL)),
+    ]
 
 # Obtener la configuración de páginas del session_state si existe
 if "pages_config" in st.session_state and "modulos" in st.session_state.pages_config:

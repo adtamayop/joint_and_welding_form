@@ -85,6 +85,9 @@ st.markdown("""
 st.title("📋 Datos del Proyecto")
 st.markdown("Configure los detalles de su informe y seleccione los módulos necesarios para su inspección.")
 
+# Modo de prueba: restringe la interfaz y configuración al módulo de Inspección Visual
+SOLO_REPORTE_VISUAL = True
+
 # Barra de progreso
 if "bloque_1" in st.session_state:
     progress = 100
@@ -125,6 +128,8 @@ modulos_disponibles = {
 
 # Módulos seleccionados por defecto
 modulos_default = ["Inspección Visual", "Líquidos Penetrantes"]
+if SOLO_REPORTE_VISUAL:
+    modulos_default = ["Inspección Visual"]
 
 with tab1:
     # Usar valores guardados si existen, si no usar por defecto
@@ -230,6 +235,16 @@ with tab1:
 with tab2:
     st.subheader("🎯 Selección de Módulos")
     st.markdown("Seleccione los módulos que desea incluir en el informe:")
+    if SOLO_REPORTE_VISUAL:
+        st.info("🧪 Modo de prueba activo: solo está habilitado el módulo de Inspección Visual.")
+
+    modulos_disponibles_ui = modulos_disponibles
+    if SOLO_REPORTE_VISUAL:
+        modulos_disponibles_ui = {
+            nombre: info
+            for nombre, info in modulos_disponibles.items()
+            if nombre == "Inspección Visual"
+        }
 
     # Crear columnas para los módulos
     col1, col2 = st.columns([2, 1])
@@ -238,7 +253,7 @@ with tab2:
         st.markdown("### 📋 Módulos Disponibles")
         modulos_seleccionados = []
         
-        for nombre, info in modulos_disponibles.items():
+        for nombre, info in modulos_disponibles_ui.items():
             with st.container():
                 st.markdown(f"""
                 <div class="module-card">
@@ -270,6 +285,9 @@ with tab2:
 col1, col2, col3 = st.columns([1,2,1])
 with col2:
     if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
+        if SOLO_REPORTE_VISUAL:
+            modulos_seleccionados = ["Inspección Visual"]
+
         if not modulos_seleccionados:
             st.error("⚠️ Debe seleccionar al menos un módulo")
         elif not numero_orden or not consecutivo_inicial:

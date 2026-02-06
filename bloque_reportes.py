@@ -10,6 +10,9 @@ from reportes import (
 
 st.title("📄 Generación de Reportes")
 
+# Modo de prueba: restringe la generación exclusivamente a Inspección Visual
+SOLO_REPORTE_VISUAL = True
+
 # Definir tipos de reportes disponibles
 tipos_reportes = {
     "visual": {
@@ -53,10 +56,20 @@ for tipo, info in tipos_reportes.items():
     if reporte_temp.verificar_datos_disponibles():
         tipos_disponibles.append(tipo)
 
+# Aplicar restricción global para corridas de prueba
+if SOLO_REPORTE_VISUAL:
+    tipos_disponibles = [tipo for tipo in tipos_disponibles if tipo == "visual"]
+
 if not tipos_disponibles:
     st.warning("⚠️ No hay datos disponibles para generar reportes.")
-    st.info("💡 Complete los datos en los módulos correspondientes antes de generar un reporte.")
+    if SOLO_REPORTE_VISUAL:
+        st.info("💡 En modo de prueba, solo se permite generar Inspección Visual. Complete ese módulo para continuar.")
+    else:
+        st.info("💡 Complete los datos en los módulos correspondientes antes de generar un reporte.")
 else:
+    if SOLO_REPORTE_VISUAL:
+        st.info("🧪 Modo de prueba activo: solo está habilitado el informe de Inspección Visual.")
+
     # Crear selector de tipo de reporte
     tipo_seleccionado = st.selectbox(
         "Seleccione el tipo de reporte a generar:",
@@ -81,6 +94,11 @@ else:
         if st.button(f"🔄 Generar Reporte de {info_tipo['nombre']}", type="primary"):
             with st.spinner(f"Generando reporte de {info_tipo['nombre']}..."):
                 try:
+                    # Salvaguarda extra en caso de manipulación manual del estado
+                    if SOLO_REPORTE_VISUAL and tipo_seleccionado != "visual":
+                        st.error("❌ En modo de prueba solo se puede generar el reporte de Inspección Visual.")
+                        st.stop()
+
                     # Crear instancia del reporte específico
                     reporte = info_tipo["clase"]()
                     
