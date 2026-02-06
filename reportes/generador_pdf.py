@@ -83,6 +83,10 @@ class GeneradorPDF:
     def __init__(self):
         self.data = {}
         self.output_path = ""
+
+    def _resolver_ruta_salida(self, output_filename: str) -> str:
+        from utils import get_report_output_path
+        return get_report_output_path(output_filename)
     
     def generar_inspeccion_visual(self, datos_proyecto: Dict[str, Any], 
                                  datos_inspeccion: Dict[str, Any], 
@@ -102,7 +106,7 @@ class GeneradorPDF:
         self.data = self._formatear_datos_inspeccion_visual(datos_proyecto, datos_inspeccion)
         
         # Generar PDF
-        self.output_path = os.path.join(os.getcwd(), output_filename)
+        self.output_path = self._resolver_ruta_salida(output_filename)
         self._generar_pdf(self.output_path)
         
         return self.output_path
@@ -115,7 +119,7 @@ class GeneradorPDF:
         self.data = self._formatear_datos_liquidos_penetrantes(datos_proyecto, datos_inspeccion)
         
         # Generar PDF
-        self.output_path = os.path.join(os.getcwd(), output_filename)
+        self.output_path = self._resolver_ruta_salida(output_filename)
         self._generar_pdf(self.output_path, "liquidos_penetrantes")
         
         return self.output_path
@@ -125,7 +129,7 @@ class GeneradorPDF:
                                      output_filename: str) -> str:
         """Genera un PDF de inspección de partículas magnéticas"""
         self.data = self._formatear_datos_particulas_magneticas(datos_proyecto, datos_inspeccion)
-        self.output_path = os.path.join(os.getcwd(), output_filename)
+        self.output_path = self._resolver_ruta_salida(output_filename)
         self._generar_pdf(self.output_path, report_type="particulas_magneticas")
         return self.output_path
     
@@ -134,7 +138,7 @@ class GeneradorPDF:
                            output_filename: str) -> str:
         """Genera un PDF de inspección de ultrasonido"""
         self.data = self._formatear_datos_ultrasonido(datos_proyecto, datos_inspeccion)
-        self.output_path = os.path.join(os.getcwd(), output_filename)
+        self.output_path = self._resolver_ruta_salida(output_filename)
         self._generar_pdf(self.output_path, report_type="ultrasonido")
         return self.output_path
     

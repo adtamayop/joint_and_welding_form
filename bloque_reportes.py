@@ -1,12 +1,12 @@
 import streamlit as st
 import os
-from datetime import datetime
 from reportes import (
     ReporteInspeccionVisual,
     ReporteLiquidosPenetrantes,
     ReporteParticulasMagneticas,
     ReporteUltrasonido
 )
+from utils import build_unique_report_filename
 
 st.title("📄 Generación de Reportes")
 
@@ -103,12 +103,19 @@ else:
                     reporte = info_tipo["clase"]()
                     
                     # Generar el reporte
-                    output_filename = f"INFORME_{tipo_seleccionado.upper()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                    output_filename = build_unique_report_filename(tipo_seleccionado)
                     output_path = reporte.generar_reporte(output_filename)
                     
                     # Leer el archivo generado
-                    with open(output_path, "rb") as pdf_file:
-                        pdf_bytes = pdf_file.read()
+                    try:
+                        with open(output_path, "rb") as pdf_file:
+                            pdf_bytes = pdf_file.read()
+                    finally:
+                        try:
+                            if os.path.exists(output_path):
+                                os.remove(output_path)
+                        except OSError:
+                            pass
                     
                     # Mostrar mensaje de éxito
                     st.success(f"✅ Reporte de {info_tipo['nombre']} generado exitosamente!")

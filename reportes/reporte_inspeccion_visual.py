@@ -286,10 +286,12 @@ class ReporteInspeccionVisual:
         }
     
     def generar_reporte(self, output_filename: str) -> str:
+        from utils import get_report_output_path
+
         dp = self.extraer_datos_proyecto()
         di = self.extraer_datos_inspeccion_visual()
         self.data = self._formatear(dp, di)
-        self.output_path = os.path.join(os.getcwd(), output_filename)
+        self.output_path = get_report_output_path(output_filename)
         self._generar_pdf(self.output_path)
         return self.output_path
     

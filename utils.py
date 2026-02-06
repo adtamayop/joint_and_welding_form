@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
+from datetime import datetime
+from uuid import uuid4
 
 materiales_base = [
     "ASTM A36",
@@ -258,6 +260,33 @@ def generar_numero_informe(orden, consecutivo, year=None, offset=0):
     year_digit = str(year)[-1]
     
     return f"T{orden_str}I{consecutivo_str}{year_digit}"
+
+def get_report_output_dir():
+    """Retorna la carpeta de salida de reportes y la crea si no existe."""
+    base_dir = os.path.dirname(__file__)
+    configured_dir = os.getenv("JW_REPORTS_DIR", "generated_reports").strip()
+
+    if not configured_dir:
+        configured_dir = "generated_reports"
+
+    if os.path.isabs(configured_dir):
+        output_dir = configured_dir
+    else:
+        output_dir = os.path.join(base_dir, configured_dir)
+
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
+
+def get_report_output_path(output_filename):
+    """Construye la ruta completa para un archivo de reporte."""
+    return os.path.join(get_report_output_dir(), output_filename)
+
+def build_unique_report_filename(report_type):
+    """Genera un nombre de archivo único y seguro para reportes PDF."""
+    safe_type = "".join(c if c.isalnum() or c in {"_", "-"} else "_" for c in report_type.upper())
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    unique_suffix = uuid4().hex[:8]
+    return f"INFORME_{safe_type}_{timestamp}_{unique_suffix}.pdf"
 
 def obtener_consecutivo_por_tipo(tipo_inspeccion):
     """
