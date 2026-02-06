@@ -7,6 +7,7 @@ Estética basada en build_report.py
 
 import os
 import re
+from io import BytesIO
 from typing import Dict, List, Any
 
 import streamlit as st
@@ -1067,13 +1068,52 @@ class ReporteInspeccionVisual:
         rows = [text] if isinstance(text, str) else text
         return self._section_box(title, rows, False, total_w)
 
+    def _build_reportlab_image(self, source, max_width, max_height):
+        """
+        Construye una imagen de ReportLab desde:
+        - ruta de archivo
+        - bytes/bytearray
+        - UploadedFile (Streamlit) u objeto file-like
+        """
+        if source is None:
+            raise ValueError("Fuente de imagen vacía")
+
+        if isinstance(source, (bytes, bytearray)):
+            img = Image(BytesIO(bytes(source)))
+        elif hasattr(source, "getvalue"):
+            # UploadedFile de Streamlit ofrece getvalue() en bytes.
+            img = Image(BytesIO(source.getvalue()))
+        elif hasattr(source, "read"):
+            pos = None
+            if hasattr(source, "tell"):
+                try:
+                    pos = source.tell()
+                except Exception:
+                    pos = None
+            if hasattr(source, "seek"):
+                try:
+                    source.seek(0)
+                except Exception:
+                    pass
+            img_bytes = source.read()
+            if pos is not None and hasattr(source, "seek"):
+                try:
+                    source.seek(pos)
+                except Exception:
+                    pass
+            img = Image(BytesIO(img_bytes))
+        else:
+            img = Image(source)
+
+        img.hAlign = "CENTER"
+        img._restrictSize(max_width, max_height)
+        return img
+
     def _foto_cell(self, registro: Dict[str, Any], idx: int, col_w: float, styles) -> Table:
         inner_w = col_w - 8*mm
         max_img_h = 45*mm
         try:
-            img = Image(registro["archivo"])
-            img.hAlign = "CENTER"
-            img._restrictSize(inner_w, max_img_h)
+            img = self._build_reportlab_image(registro.get("archivo"), inner_w, max_img_h)
         except Exception:
             img = Box(inner_w, max_img_h, f"FOTO {idx}")
         titulo = Paragraph(f"<b>Registro Fotográfico N° {idx}</b>", styles["Body"])
@@ -1103,20 +1143,18 @@ class ReporteInspeccionVisual:
         """Crea una celda para mostrar una imagen del esquema"""
         inner_w = col_w - 8 * mm
 
-        # Si es full_page, dejamos que la imagen crezca casi hasta toda la página
+        # Si es full_page, limitamos la altura al área útil real del frame.
+        # Con este template (encabezado + footer), 180-200 mm excede la zona
+        # disponible y provoca "Flowable ... too large" en ReportLab.
         if full_page:
-            # para carta: 180–200 mm de alto es seguro
-            max_img_h = 180 * mm
-            max_frame_h = 200 * mm
+            max_img_h = 120 * mm
+            max_frame_h = 145 * mm
         else:
             max_img_h = 45 * mm
             max_frame_h = 70 * mm
 
         try:
-            img = Image(esquema_item["archivo"])
-            img.hAlign = "CENTER"
-            # _restrictSize SOLO reduce, nunca agranda → respeta el tamaño real
-            img._restrictSize(inner_w, max_img_h)
+            img = self._build_reportlab_image(esquema_item.get("archivo"), inner_w, max_img_h)
         except Exception:
             img = Box(inner_w, max_img_h, f"ESQUEMA {idx}")
 

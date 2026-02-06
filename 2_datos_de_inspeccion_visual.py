@@ -355,16 +355,39 @@ uploaded_files_esquema = st.file_uploader(
     accept_multiple_files=True
 )
 
+def agregar_archivos_esquema(archivos):
+    """Agrega archivos al esquema global evitando duplicados por nombre."""
+    if not archivos:
+        return 0
+
+    nombres_actuales = {
+        img.get("nombre")
+        for img in esquema_global
+        if isinstance(img, dict) and img.get("nombre")
+    }
+
+    agregadas = 0
+    for file in archivos:
+        if file.name in nombres_actuales:
+            continue
+        nueva_imagen = {
+            "archivo": file,
+            "nombre": file.name,
+            "comentario": ""
+        }
+        esquema_global.append(nueva_imagen)
+        nombres_actuales.add(file.name)
+        agregadas += 1
+
+    return agregadas
+
 if st.button("Agregar Imágenes al Esquema", key="agregar_esquema_2_1"):
     if uploaded_files_esquema:
-        for file in uploaded_files_esquema:
-            nueva_imagen = {
-                "archivo": file,
-                "nombre": file.name,
-                "comentario": ""
-            }
-            esquema_global.append(nueva_imagen)
-        st.success(f"Se agregaron {len(uploaded_files_esquema)} imágenes al esquema global")
+        agregadas = agregar_archivos_esquema(uploaded_files_esquema)
+        if agregadas > 0:
+            st.success(f"Se agregaron {agregadas} imágenes al esquema global")
+        else:
+            st.info("Las imágenes seleccionadas ya estaban en el esquema global.")
         st.rerun()
     else:
         st.warning("No has seleccionado ningún archivo.")
@@ -474,6 +497,12 @@ datos_finales = {
 
 if st.button("Guardar Datos"):
     st.write("### Datos guardados correctamente")
+
+    # Si el usuario seleccionó archivos pero no pulsó "Agregar Imágenes al Esquema",
+    # incluirlos automáticamente al guardar para evitar perderlos.
+    agregadas_guardado = agregar_archivos_esquema(uploaded_files_esquema)
+    if agregadas_guardado > 0:
+        st.info(f"Se agregaron automáticamente {agregadas_guardado} imágenes del esquema al guardar.")
     
     # Obtener los componentes del kit seleccionado
     componentes_seleccionados = []
