@@ -145,8 +145,8 @@ with tab1:
         "norma_global": "AWS D1.1 2020",
         "fecha": datetime.now().date(),
         "lugar": "Bogotá, Colombia",
-        "firma_1": "Firma del inspector que realiza la inspección y el informe",
-        "firma_2": "Revisa el informe",
+        "firma_1": "Andrés López",
+        "firma_2": "Andrés López",
         "firma_3": "Cliente",
         "modulos_seleccionados": modulos_default
     }
@@ -154,7 +154,7 @@ with tab1:
     if "bloque_1" in st.session_state:
         valores = st.session_state.bloque_1.copy()
         if "firmas" in valores:
-            valores["firma_1"] = valores["firmas"].get("firma_1", def_valores["firma_1"])
+            valores["firma_1"] = valores["firmas"].get("firma_1", valores.get("elaboro", def_valores["firma_1"]))
             valores["firma_2"] = valores["firmas"].get("firma_2", def_valores["firma_2"])
             valores["firma_3"] = valores["firmas"].get("firma_3", def_valores["firma_3"])
     else:
@@ -226,10 +226,22 @@ with tab1:
     with st.expander("👥 Firmas", expanded=True):
         st.markdown("Configure las firmas necesarias para el informe")
         col1, col2, col3 = st.columns(3)
+        firma_1 = elaboro
         with col1:
-            firma_1 = st.text_input("Firma 1", valores["firma_1"], help="Inspector que realiza la inspección")
+            st.text_input(
+                "Elaboró (Firma 1)",
+                value=firma_1,
+                help="Siempre coincide con el inspector seleccionado en 'Elaboró'",
+                disabled=True,
+            )
         with col2:
-            firma_2 = st.text_input("Firma 2", valores["firma_2"], help="Revisor del informe")
+            firma_2_default = valores.get("firma_2", elaboro)
+            firma_2 = st.selectbox(
+                "Revisó",
+                options=inspectores,
+                index=inspectores.index(firma_2_default) if firma_2_default in inspectores else inspectores.index(elaboro) if elaboro in inspectores else 0,
+                help="Inspector que revisa el informe",
+            )
         with col3:
             firma_3 = st.text_input("Firma 3", valores["firma_3"], help="Cliente o representante")
 
