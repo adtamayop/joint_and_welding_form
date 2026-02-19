@@ -18,8 +18,10 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as rl_canvas
 from reportlab.platypus import (
     BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle,
-    Image, Flowable, KeepInFrame, KeepTogether
+    Image, Flowable, KeepInFrame, KeepTogether, CondPageBreak
 )
+
+SIGNATURE_BLOCK_MIN_SPACE = 52 * mm
 
 # ---------------- Numeración real: "Página X de Y" (sin duplicar) -------------------------
 class NumberedCanvas(rl_canvas.Canvas):
@@ -105,27 +107,6 @@ class MarkAbbreviationPage(Flowable):
         if hasattr(self.canv, 'mark_page_with_abbreviations'):
             page_num = getattr(self.canv, '_pageNumber', 1)
             self.canv.mark_page_with_abbreviations(page_num)
-
-# ---------------- Flowable para marcar la última página -----------
-class MarkLastPage(Flowable):
-    """Flowable que marca la página actual como la última página"""
-    def __init__(self):
-        Flowable.__init__(self)
-        self.width = 0
-        self.height = 0
-    
-    def draw(self):
-        # Marcar esta página como la última
-        page_num = getattr(self.canv, '_pageNumber', 1)
-        # Marcar directamente en el canvas
-        if not hasattr(self.canv, '_last_page_number'):
-            self.canv._last_page_number = 0
-        self.canv._last_page_number = page_num
-        # También actualizar el total de páginas basado en los estados guardados
-        if hasattr(self.canv, '_saved_page_states'):
-            # El número de estados guardados + 1 (la página actual) = total
-            total = len(self.canv._saved_page_states) + 1
-            self.canv._total_pages = total
 
 class ReporteInspeccionVisual:
     """Clase específica para generar reportes de Inspección Visual - Autónoma"""
@@ -540,227 +521,54 @@ class ReporteInspeccionVisual:
 
         x0, w = doc.leftMargin, doc.width
         current_page = getattr(canv, '_pageNumber', 1)
-        
+
         # Obtener información del canvas si está disponible
         has_abbreviations = False
-        is_last_page = False
         if hasattr(canv, 'has_abbreviations'):
             has_abbreviations = canv.has_abbreviations(current_page)
-            # Intentar detectar si es la última página
-            # Verificar si tenemos el número de la última página marcado
-            if hasattr(canv, '_last_page_number') and canv._last_page_number > 0:
-                is_last_page = (current_page == canv._last_page_number)
-            elif hasattr(canv, '_total_pages') and canv._total_pages > 0:
-                is_last_page = (current_page == canv._total_pages)
-            elif hasattr(canv, '_saved_page_states'):
-                total = len(canv._saved_page_states)
-                is_last_page = (current_page == total) if total > 0 else False
-            else:
-                is_last_page = canv.is_last_page(current_page)
         
         st_small = ParagraphStyle("small", fontName="Helvetica", fontSize=7, leading=8)
         st_small_b = ParagraphStyle("small_b", parent=st_small, fontName="Helvetica-Bold", fontSize=9, leading=10, alignment=1)
         
         cliente_nombre = enc.get("cliente", "Concreacero")
         
-        # Intentar detectar si es la última página de múltiples formas
-        # Si no podemos detectarlo con certeza, mostrar firmas si parece ser la última
-        # (por ejemplo, si no hay más estados guardados o si el número de página es alto)
-        show_firmas = is_last_page
-        
-        # Si no detectamos la última página, verificar si está marcada por el Flowable MarkLastPage
-        if not show_firmas and hasattr(canv, '_last_page_number'):
-            if canv._last_page_number > 0 and current_page == canv._last_page_number:
-                show_firmas = True
-        
-        # Si aún no detectamos, usar heurística: si la página actual es igual al total de páginas
-        if not show_firmas and hasattr(canv, '_total_pages') and canv._total_pages > 0:
-            if current_page == canv._total_pages:
-                show_firmas = True
-        
-        # Si es la última página (o parece serlo), mostrar firmas
-        if show_firmas:
-            self._draw_firmas_footer(canv, doc, enc, w, x0)
-        else:
-            # Footer normal: empresa y cliente
-            data = [[
-                Paragraph("Joint and Welding Ingenieros S.A.S.", st_small_b),
-                Paragraph(cliente_nombre, st_small_b),
-            ]]
-            
-            col_mid = w * 0.6
-            col_right = w * 0.4
-            t = Table(data, colWidths=[col_mid, col_right])
-            t.setStyle(TableStyle([
-                ("BOX", (0,0), (-1,-1), 0.8, colors.black),
-                ("INNERGRID", (0,0), (-1,-1), 0.8, colors.black),
-                ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-                ("LEFTPADDING", (0,0), (-1,-1), 3),
-                ("RIGHTPADDING", (0,0), (-1,-1), 3),
-                ("ALIGN", (0,0), (0,0), "CENTER"),
-                ("ALIGN", (1,0), (1,0), "CENTER"),
-            ]))
-            t.wrapOn(canv, w, 0)
-            t.drawOn(canv, x0, 15*mm)
-            
-            # Si esta página tiene abreviaciones, agregarlas arriba
-            if has_abbreviations:
-                abrev_txt = ("Abreviaciones:  A: Aplica   N.A: No aplica   S: Satisfactorio   "
-                           "N.S: No Satisfactorio   F.A: Fuera de Alcance")
-                abrev_para = Paragraph(abrev_txt, st_small)
-                abrev_data = [[abrev_para]]
-                abrev_t = Table(abrev_data, colWidths=[w])
-                abrev_t.setStyle(TableStyle([
-                    ("BOX", (0,0), (-1,-1), 0.8, colors.black),
-                    ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-                    ("LEFTPADDING", (0,0), (-1,-1), 3),
-                    ("RIGHTPADDING", (0,0), (-1,-1), 3),
-                ]))
-                abrev_t.wrapOn(canv, w, 0)
-                abrev_t.drawOn(canv, x0, 15*mm + t._height + 0.5*mm)
-    
-    def _draw_firmas_footer(self, canv, doc, enc, w, x0):
-        """Dibuja la sección de firmas en el footer de la última página"""
-        from reportlab.platypus import Paragraph, Spacer
-        from reportlab.lib.styles import ParagraphStyle
-        
-        # Estilos compactos
-        style_label = ParagraphStyle(
-            name="FirmaLabel",
-            fontName="Helvetica-Bold",
-            fontSize=9,
-            leading=10
-        )
-        style_label_center = ParagraphStyle(
-            name="FirmaLabelCenter",
-            fontName="Helvetica-Bold",
-            fontSize=9,
-            leading=10,
-            alignment=1  # CENTER
-        )
-        style_name = ParagraphStyle(
-            name="FirmaName",
-            fontName="Helvetica",
-            fontSize=8,
-            leading=9
-        )
-        style_company = ParagraphStyle(
-            name="CompanyName",
-            fontName="Helvetica-Bold",
-            fontSize=10,
-            leading=11,
-            alignment=1  # CENTER
-        )
-        style_client = ParagraphStyle(
-            name="ClientName",
-            fontName="Helvetica-Bold",
-            fontSize=9,
-            leading=10,
-            alignment=1  # CENTER
-        )
-        
-        cliente_nombre = enc.get("cliente", "Concreacero")
-        altura_firma = 12*mm  # Reducida de 18mm a 12mm
-        
-        col_elaboro = w * 0.35
-        col_reviso = w * 0.35
-        col_cliente = w * 0.30
-        
-        # Fila 1: Etiquetas
-        fila1 = [
-            Paragraph("Elaboró:", style_label),
-            Paragraph("Revisó:", style_label),
-            Paragraph("Enviado A:", style_label_center)
-        ]
-        
-        # Fila 2: Contenido
-        # Columna Elaboró: solo espacio para firma (sin nombre)
-        espacio_firma_elaboro = EspacioFirma(col_elaboro - 8*mm, altura_firma)
-        celda_elaboro = Table([
-            [espacio_firma_elaboro],
-        ], colWidths=[col_elaboro - 8*mm])
-        celda_elaboro.setStyle(TableStyle([
-            ("LEFTPADDING", (0,0), (-1,-1), 2),
-            ("RIGHTPADDING", (0,0), (-1,-1), 2),
-            ("TOPPADDING", (0,0), (-1,-1), 1),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 1),
-            ("ALIGN", (0,0), (0,0), "CENTER"),  # Centrar la firma
-        ]))
-        
-        # Columna Revisó: espacio para sello a la izquierda, espacio para firma a la derecha
-        # Espacio para sello (sin cuadro) - aumentado más
-        espacio_sello = EspacioFirma(22*mm, 12*mm)
-        # Espacio para firma sin caja - movido más a la derecha
-        espacio_firma_reviso = EspacioFirma(col_reviso - 49*mm, altura_firma)
-        # Espacio para NIT (sin texto) - aumentado para coincidir con el sello
-        espacio_nit = EspacioFirma(22*mm, 4*mm)
-        
-        # Tabla interna para Revisó: espacio para sello a la izquierda, espacio para firma a la derecha
-        # Agregar padding izquierdo para mover todo el contenido más a la derecha
-        celda_reviso_superior = Table([
-            [espacio_sello, espacio_firma_reviso],  # Espacio para sello y espacio para firma (sin cajas)
-            [espacio_nit, Paragraph("", style_name)],  # Espacio para NIT (sin texto)
-        ], colWidths=[22*mm, col_reviso - 49*mm])
-        celda_reviso_superior.setStyle(TableStyle([
-            ("LEFTPADDING", (0,0), (-1,-1), 5),  # Aumentado padding izquierdo para mover contenido a la derecha
-            ("RIGHTPADDING", (0,0), (-1,-1), 2),
-            ("TOPPADDING", (0,0), (-1,-1), 1),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 1),
-            ("VALIGN", (0,0), (-1,-1), "TOP"),
-        ]))
-        
-        # Nombre del revisor (vacío)
-        nombre_revisor = Paragraph("", style_name)
-        
-        # Contenedor completo de Revisó
-        celda_reviso_completa = Table([
-            [celda_reviso_superior],
-            [Spacer(0, 0.5*mm)],
-            [nombre_revisor],  # Nombre del revisor (vacío)
-        ], colWidths=[col_reviso - 4*mm])
-        celda_reviso_completa.setStyle(TableStyle([
-            ("LEFTPADDING", (0,0), (-1,-1), 2),
-            ("RIGHTPADDING", (0,0), (-1,-1), 2),
-            ("TOPPADDING", (0,0), (-1,-1), 1),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 1),
-        ]))
-        
-        fila2 = [celda_elaboro, celda_reviso_completa, Paragraph("", style_name)]
-        
-        # Fila 3: Nombre empresa y cliente (al mismo nivel)
-        empresa_text = Paragraph("Joint and Welding Ingenieros S.A.S.", style_company)
-        cliente_text = Paragraph(cliente_nombre, style_company)
-        fila3 = [empresa_text, Paragraph("", style_name), cliente_text]
-        
-        data = [fila1, fila2, fila3]
-        # Alturas reducidas: fila de etiquetas más pequeña, fila de contenido más compacta
-        row_heights = [6*mm, altura_firma + 5*mm, 5*mm]  # Reducidas de [7mm, altura_firma + 8mm, 6mm]
-        t = Table(data, colWidths=[col_elaboro, col_reviso, col_cliente], rowHeights=row_heights)
-        
+        # Footer normal: empresa y cliente
+        data = [[
+            Paragraph("Joint and Welding Ingenieros S.A.S.", st_small_b),
+            Paragraph(cliente_nombre, st_small_b),
+        ]]
+
+        col_mid = w * 0.6
+        col_right = w * 0.4
+        t = Table(data, colWidths=[col_mid, col_right])
         t.setStyle(TableStyle([
-            ("BOX", (0,0), (-1,-1), 1.0, colors.black),
-            # Línea horizontal debajo del contenido (fila 1)
-            ("LINEBELOW", (0,1), (-1,1), 1.0, colors.black),  # Línea debajo del contenido
-            # Línea vertical entre Revisó y Cliente (columna 1 y 2)
-            ("LINEAFTER", (1,0), (1,-1), 1.0, colors.black),
-            # NO línea entre Elaboró y Revisó (columna 0 y 1)
-            # NO línea debajo de las etiquetas (fila 0)
-            ("VALIGN", (0,0), (-1,-1), "TOP"),
+            ("BOX", (0,0), (-1,-1), 0.8, colors.black),
+            ("INNERGRID", (0,0), (-1,-1), 0.8, colors.black),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
             ("LEFTPADDING", (0,0), (-1,-1), 3),
             ("RIGHTPADDING", (0,0), (-1,-1), 3),
-            ("TOPPADDING", (0,0), (-1,-1), 2),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 2),
-            # Centrar "Enviado A:" en la fila 1
-            ("ALIGN", (2,0), (2,0), "CENTER"),
-            # Hacer que el nombre de la empresa ocupe las columnas 0 y 1 (Elaboró y Revisó)
-            ("SPAN", (0,2), (1,2)),
-            ("ALIGN", (0,2), (1,2), "CENTER"),
-            ("ALIGN", (2,2), (2,2), "CENTER"),  # Centrar el nombre del cliente
+            ("ALIGN", (0,0), (0,0), "CENTER"),
+            ("ALIGN", (1,0), (1,0), "CENTER"),
         ]))
-        
         t.wrapOn(canv, w, 0)
         t.drawOn(canv, x0, 15*mm)
 
+        # Si esta página tiene abreviaciones, agregarlas arriba
+        if has_abbreviations:
+            abrev_txt = ("Abreviaciones:  A: Aplica   N.A: No aplica   S: Satisfactorio   "
+                       "N.S: No Satisfactorio   F.A: Fuera de Alcance")
+            abrev_para = Paragraph(abrev_txt, st_small)
+            abrev_data = [[abrev_para]]
+            abrev_t = Table(abrev_data, colWidths=[w])
+            abrev_t.setStyle(TableStyle([
+                ("BOX", (0,0), (-1,-1), 0.8, colors.black),
+                ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                ("LEFTPADDING", (0,0), (-1,-1), 3),
+                ("RIGHTPADDING", (0,0), (-1,-1), 3),
+            ]))
+            abrev_t.wrapOn(canv, w, 0)
+            abrev_t.drawOn(canv, x0, 15*mm + t._height + 0.5*mm)
+    
     # ---------------- helpers de secciones ----------------
     def _section_box(self, title, rows, with_obs, total_w, row_height=None, compact_padding=False, allow_split=True):
         """
@@ -781,11 +589,18 @@ class ReporteInspeccionVisual:
         if len(data) > 1:
             row_heights[0] = row_height  # Título con misma altura para compactar
         
-        # Permitir división de tabla entre páginas si allow_split es True
-        # repeatRows=1 mantiene el título cuando se divide
+        # Permitir división de tabla entre páginas si allow_split es True.
+        # repeatRows=1 mantiene el título cuando se divide.
+        # rowSplitRange evita que se parta justo después del título: así el título
+        # siempre viaja con la primera fila de contenido.
+        row_split_range = None
+        if allow_split and len(data) > 2:
+            row_split_range = (2, len(data) - 1)
+
         t = Table(data, colWidths=cols, rowHeights=row_heights, 
                  repeatRows=1 if allow_split and len(data) > 1 else 0,
-                 splitByRow=1 if allow_split else 0)
+                 splitByRow=1 if allow_split else 0,
+                 rowSplitRange=row_split_range)
         
         padding = 2 if compact_padding else 4
         # Padding vertical más reducido para bloques compactos
@@ -846,12 +661,17 @@ class ReporteInspeccionVisual:
         # Altura de filas: encabezado fijo, resto automática
         row_heights = [row_height] + [None] * (len(data) - 1)
 
+        row_split_range = None
+        if allow_split and len(data) > 2:
+            row_split_range = (2, len(data) - 1)
+
         t = Table(
             data,
             colWidths=cols,
             rowHeights=row_heights,
             repeatRows=1 if allow_split and len(data) > 1 else 0,
             splitByRow=1 if allow_split else 0,
+            rowSplitRange=row_split_range,
         )
 
         padding = 2 if compact_padding else 4
@@ -1311,6 +1131,7 @@ class ReporteInspeccionVisual:
         # Detalle de resultados (antes de elementos inspeccionados)
         detalle = data.get("detalle_resultados", "")
         if detalle and detalle.strip():
+            story.append(CondPageBreak(18 * mm))
             story.append(Paragraph(f"{seccion}. DETALLE DE ELEMENTOS INSPECCIONADOS Y RESULTADOS:", styles["HSection"]))
             story.append(Paragraph(detalle, styles["Body"]))
             story.append(Spacer(0, 6*mm))
@@ -1319,6 +1140,8 @@ class ReporteInspeccionVisual:
         # Elementos inspeccionados
         elems = data.get("elementos_inspeccionados", [])
         if elems:
+            # Reservar espacio para: título + encabezado + primera fila.
+            story.append(CondPageBreak(26 * mm))
             story.append(Paragraph(f"{seccion}. ELEMENTOS INSPECCIONADOS:", styles["HSection"]))
 
             # Estilo para el texto de las celdas (con wrap)
@@ -1367,7 +1190,14 @@ class ReporteInspeccionVisual:
                 total_w * 0.300,  # Observación
             ]
 
-            t = Table(tabla, colWidths=col_widths)
+            row_split_range = (2, len(tabla) - 1) if len(tabla) > 2 else None
+            t = Table(
+                tabla,
+                colWidths=col_widths,
+                repeatRows=1 if len(tabla) > 1 else 0,
+                splitByRow=1,
+                rowSplitRange=row_split_range,
+            )
 
             # Estilos base
             style_list = [
@@ -1402,6 +1232,7 @@ class ReporteInspeccionVisual:
         # Observaciones generales
         obs = data.get("observaciones_generales", "")
         if obs and obs.strip():
+            story.append(CondPageBreak(18 * mm))
             story.append(Paragraph(f"{seccion}. OBSERVACIONES GENERALES:", styles["HSection"]))
             story.append(Paragraph(obs, styles["Body"]))
             story.append(Spacer(0, 6*mm))
@@ -1411,6 +1242,7 @@ class ReporteInspeccionVisual:
         regs = data.get("registros_fotograficos", [])
         imgs = [r for r in regs if isinstance(r, dict) and r.get("archivo")]
 
+        story.append(CondPageBreak(30 * mm))
         story.append(Paragraph(f"{seccion}. REGISTRO FOTOGRÁFICO:", styles["HSection"]))
 
         if imgs:
@@ -1442,10 +1274,11 @@ class ReporteInspeccionVisual:
         else:
             story.append(Paragraph("No se registraron fotografías en este informe.", styles["Body"]))
 
-        # Agregar un marcador al final para identificar la última página
-        story.append(MarkLastPage())
-        
-        # Las firmas ahora se dibujan en el footer de la última página
+        # Sección de firmas y sello al final: no dividir entre páginas.
+        firma = self._crear_seccion_firmas(total_w, self.data["encabezado"])
+        story.append(CondPageBreak(SIGNATURE_BLOCK_MIN_SPACE))
+        story.append(KeepTogether([Spacer(0, 5*mm), firma]))
+
         return story
     
     def _crear_seccion_firmas(self, total_w, encabezado):
@@ -1512,7 +1345,7 @@ class ReporteInspeccionVisual:
         espacio_firma_elaboro = EspacioFirma(col_elaboro - 6*mm, altura_firma - 4*mm)
         celda_elaboro = Table([
             [espacio_firma_elaboro],
-        ], colWidths=[col_elaboro - 6*mm])
+        ], colWidths=[col_elaboro - 6*mm], splitByRow=0, splitInRow=0)
         celda_elaboro.setStyle(TableStyle([
             ("LEFTPADDING", (0,0), (-1,-1), 2),
             ("RIGHTPADDING", (0,0), (-1,-1), 2),
@@ -1530,7 +1363,7 @@ class ReporteInspeccionVisual:
             [espacio_sello, espacio_firma_reviso],  # Espacio para sello y espacio para firma (sin cajas)
             [espacio_nit, Paragraph("", style_name)],  # Espacio para NIT (sin texto)
             [Paragraph("", style_name), Paragraph("", style_name)],  # Nombre del revisor (vacío)
-        ], colWidths=[15*mm, col_reviso - 22*mm])
+        ], colWidths=[15*mm, col_reviso - 22*mm], splitByRow=0, splitInRow=0)
         celda_reviso_interna.setStyle(TableStyle([
             ("LEFTPADDING", (0,0), (-1,-1), 1),
             ("RIGHTPADDING", (0,0), (-1,-1), 1),
@@ -1556,7 +1389,13 @@ class ReporteInspeccionVisual:
         # Crear tabla principal con alturas de fila reducidas
         data = [fila1, fila2, fila3]
         row_heights = [6*mm, altura_firma + 2*mm, 5*mm]  # Alturas más pequeñas
-        t = Table(data, colWidths=[col_elaboro, col_reviso, col_cliente], rowHeights=row_heights)
+        t = Table(
+            data,
+            colWidths=[col_elaboro, col_reviso, col_cliente],
+            rowHeights=row_heights,
+            splitByRow=0,
+            splitInRow=0,
+        )
         
         # Estilos de la tabla más compactos
         t.setStyle(TableStyle([

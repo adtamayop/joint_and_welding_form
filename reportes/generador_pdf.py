@@ -13,11 +13,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
     BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, Image, Flowable, HRFlowable, KeepInFrame
+    PageBreak, Image, Flowable, HRFlowable, KeepInFrame, KeepTogether, CondPageBreak
 )
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
+
+SIGNATURE_BLOCK_MIN_SPACE = 52 * mm
 
 class NumberedCanvas(canvas.Canvas):
     """Canvas personalizado para numeración de páginas"""
@@ -446,7 +448,15 @@ class GeneradorPDF:
         for r in rows:
             data.append([r, ""] if with_obs else [r])
 
-        t = Table(data, colWidths=cols)
+        allow_split = len(data) > 2
+        row_split_range = (2, len(data) - 1) if allow_split else None
+        t = Table(
+            data,
+            colWidths=cols,
+            repeatRows=1 if allow_split else 0,
+            splitByRow=1 if allow_split else 0,
+            rowSplitRange=row_split_range
+        )
         t.setStyle(TableStyle([
             ("GRID", (0,0), (-1,-1), 0.6, colors.black),
             ("BACKGROUND", (0,0), (-1,0), colors.whitesmoke),
@@ -800,7 +810,7 @@ class GeneradorPDF:
         espacio_firma_elaboro = EspacioFirma(col_elaboro - 8*mm, altura_firma)
         celda_elaboro = Table([
             [espacio_firma_elaboro],
-        ], colWidths=[col_elaboro - 8*mm])
+        ], colWidths=[col_elaboro - 8*mm], splitByRow=0, splitInRow=0)
         celda_elaboro.setStyle(TableStyle([
             ("LEFTPADDING", (0,0), (-1,-1), 2),
             ("RIGHTPADDING", (0,0), (-1,-1), 2),
@@ -821,7 +831,7 @@ class GeneradorPDF:
         celda_reviso_superior = Table([
             [espacio_sello, espacio_firma_reviso],  # Espacio para sello y espacio para firma (sin cajas)
             [espacio_nit, Paragraph("", style_name)],  # Espacio para NIT (sin texto)
-        ], colWidths=[22*mm, col_reviso - 49*mm])
+        ], colWidths=[22*mm, col_reviso - 49*mm], splitByRow=0, splitInRow=0)
         celda_reviso_superior.setStyle(TableStyle([
             ("LEFTPADDING", (0,0), (-1,-1), 5),  # Padding izquierdo para mover contenido a la derecha
             ("RIGHTPADDING", (0,0), (-1,-1), 2),
@@ -838,7 +848,7 @@ class GeneradorPDF:
             [celda_reviso_superior],
             [Spacer(0, 0.5*mm)],
             [nombre_revisor],  # Nombre del revisor (vacío)
-        ], colWidths=[col_reviso - 4*mm])
+        ], colWidths=[col_reviso - 4*mm], splitByRow=0, splitInRow=0)
         celda_reviso_completa.setStyle(TableStyle([
             ("LEFTPADDING", (0,0), (-1,-1), 2),
             ("RIGHTPADDING", (0,0), (-1,-1), 2),
@@ -856,7 +866,13 @@ class GeneradorPDF:
         data = [fila1, fila2, fila3]
         # Alturas reducidas: fila de etiquetas más pequeña, fila de contenido más compacta
         row_heights = [6*mm, altura_firma + 5*mm, 5*mm]
-        t = Table(data, colWidths=[col_elaboro, col_reviso, col_cliente], rowHeights=row_heights)
+        t = Table(
+            data,
+            colWidths=[col_elaboro, col_reviso, col_cliente],
+            rowHeights=row_heights,
+            splitByRow=0,
+            splitInRow=0,
+        )
         
         # Estilos de la tabla (iguales al informe de inspección visual)
         t.setStyle(TableStyle([
@@ -1100,9 +1116,10 @@ class GeneradorPDF:
             # Si no hay fotos, agregar un mensaje
             story.append(Paragraph("No hay registros fotográficos.", styles["Body"]))
 
-        # Sección de firmas y sello al final (compacta, en la parte inferior)
-        story.append(Spacer(0, 5*mm))
-        story.append(self._crear_seccion_firmas(total_w, self.data["encabezado"]))
+        # Sección de firmas y sello al final: no dividir entre páginas.
+        firma = self._crear_seccion_firmas(total_w, self.data["encabezado"])
+        story.append(CondPageBreak(SIGNATURE_BLOCK_MIN_SPACE))
+        story.append(KeepTogether([Spacer(0, 5*mm), firma]))
 
         return story 
     
@@ -1135,6 +1152,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 6*mm))
 
         # 6. MATERIALES UTILIZADOS
+        story.append(CondPageBreak(24 * mm))
         story.append(Paragraph("6. MATERIALES UTILIZADOS", styles["HSection"]))
         story.append(Spacer(0, 3*mm))
         
@@ -1165,7 +1183,14 @@ class GeneradorPDF:
         
         # Crear la tabla
         col_widths = [total_w * 0.25, total_w * 0.25, total_w * 0.30, total_w * 0.20]
-        materiales_tabla = Table(tabla_data, colWidths=col_widths)
+        row_split_range = (2, len(tabla_data) - 1) if len(tabla_data) > 2 else None
+        materiales_tabla = Table(
+            tabla_data,
+            colWidths=col_widths,
+            repeatRows=1 if len(tabla_data) > 1 else 0,
+            splitByRow=1,
+            rowSplitRange=row_split_range
+        )
         materiales_tabla.setStyle(TableStyle([
             ("GRID", (0, 0), (-1, -1), 0.6, colors.black),
             ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
@@ -1183,6 +1208,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 6*mm))
 
         # 7. NORMAS PARA LOS PROCEDIMIENTOS Y MÉTODOS DE APLICACIÓN
+        story.append(CondPageBreak(18 * mm))
         story.append(Paragraph("7. NORMAS PARA LOS PROCEDIMIENTOS Y MÉTODOS DE APLICACIÓN:", styles["HSection"]))
         story.append(Spacer(0, 3*mm))
         
@@ -1207,6 +1233,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 3*mm))
         
         # 7.1 TIPO Y MÉTODO
+        story.append(CondPageBreak(16 * mm))
         tipo_metodo_style = ParagraphStyle(
             name="TipoMetodo",
             fontName="Helvetica-Bold",
@@ -1248,6 +1275,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 3*mm))
         
         # 7.2 PROCEDIMIENTO
+        story.append(CondPageBreak(16 * mm))
         story.append(Paragraph("7.2 PROCEDIMIENTO", tipo_metodo_style))
         story.append(Spacer(0, 2*mm))
         
@@ -1282,6 +1310,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 6*mm))
 
         # 8. PARÁMETROS DE OPERACIÓN
+        story.append(CondPageBreak(24 * mm))
         story.append(Paragraph("8. PARÁMETROS DE OPERACIÓN", styles["HSection"]))
         story.append(Spacer(0, 3*mm))
         
@@ -1320,7 +1349,14 @@ class GeneradorPDF:
             total_w * 0.18,  # APLICACIÓN (reducida)
             total_w * 0.24   # ILUMINACIÓN (reducida)
         ]
-        parametros_tabla = Table(tabla_parametros_data, colWidths=col_widths)
+        row_split_range = (2, len(tabla_parametros_data) - 1) if len(tabla_parametros_data) > 2 else None
+        parametros_tabla = Table(
+            tabla_parametros_data,
+            colWidths=col_widths,
+            repeatRows=1 if len(tabla_parametros_data) > 1 else 0,
+            splitByRow=1,
+            rowSplitRange=row_split_range
+        )
         parametros_tabla.setStyle(TableStyle([
             ("GRID", (0, 0), (-1, -1), 0.6, colors.black),
             ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
@@ -1340,7 +1376,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 6*mm))
 
         # 9. ESQUEMA ESTRUCTURA INSPECCIONADA
-        esquema = data.get("esquema", [])
+        esquema = self.data.get("seccion_9_esquema", {}).get("esquema", [])
         esquema_imgs = [e for e in esquema if isinstance(e, dict) and e.get("archivo")]
         if esquema_imgs:
             story.append(Paragraph(f"{seccion}. ESQUEMA ESTRUCTURA INSPECCIONADA:", styles["HSection"]))
@@ -1391,6 +1427,7 @@ class GeneradorPDF:
         elementos_inspeccionados = self.data.get("seccion_7_elementos_inspeccionados", {}).get(
             "elementos_inspeccionados", [])
         if elementos_inspeccionados:
+            story.append(CondPageBreak(26 * mm))
             story.append(Paragraph("10. ELEMENTOS INSPECCIONADOS:", styles["HSection"]))
 
             body_table = ParagraphStyle(
@@ -1434,7 +1471,14 @@ class GeneradorPDF:
                 total_w * 0.300,  # Observación
             ]
 
-            t = Table(tabla, colWidths=col_widths)
+            row_split_range = (2, len(tabla) - 1) if len(tabla) > 2 else None
+            t = Table(
+                tabla,
+                colWidths=col_widths,
+                repeatRows=1 if len(tabla) > 1 else 0,
+                splitByRow=1,
+                rowSplitRange=row_split_range
+            )
 
             style_list = [
                 ("GRID", (0, 0), (-1, -1), 0.6, colors.black),
@@ -1475,6 +1519,7 @@ class GeneradorPDF:
         regs = self.data.get("registros_fotograficos", [])
         imgs = [r for r in regs if isinstance(r, dict) and r.get("archivo")]
 
+        story.append(CondPageBreak(24 * mm))
         story.append(Paragraph("13. REGISTROS FOTOGRÁFICOS", styles["HSection"]))
 
         if imgs:
@@ -1508,9 +1553,10 @@ class GeneradorPDF:
         else:
             story.append(Paragraph("No se registraron fotografías en este informe.", styles["Body"]))
 
-        # Sección de firmas y sello al final (compacta, en la parte inferior)
-        story.append(Spacer(0, 5*mm))
-        story.append(self._crear_seccion_firmas(total_w, self.data["encabezado"]))
+        # Sección de firmas y sello al final: no dividir entre páginas.
+        firma = self._crear_seccion_firmas(total_w, self.data["encabezado"])
+        story.append(CondPageBreak(SIGNATURE_BLOCK_MIN_SPACE))
+        story.append(KeepTogether([Spacer(0, 5*mm), firma]))
 
         return story
 
@@ -1578,6 +1624,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 6*mm))
 
         # 12. REGISTROS FOTOGRÁFICOS
+        story.append(CondPageBreak(24 * mm))
         story.append(Paragraph("12. REGISTROS FOTOGRÁFICOS", styles["HSection"]))
         story.append(Spacer(0, 3*mm))
         
@@ -1596,9 +1643,10 @@ class GeneradorPDF:
             # Si no hay fotos, agregar un mensaje
             story.append(Paragraph("No hay registros fotográficos.", styles["Body"]))
 
-        # Sección de firmas y sello al final (compacta, en la parte inferior)
-        story.append(Spacer(0, 5*mm))
-        story.append(self._crear_seccion_firmas(total_w, self.data["encabezado"]))
+        # Sección de firmas y sello al final: no dividir entre páginas.
+        firma = self._crear_seccion_firmas(total_w, self.data["encabezado"])
+        story.append(CondPageBreak(SIGNATURE_BLOCK_MIN_SPACE))
+        story.append(KeepTogether([Spacer(0, 5*mm), firma]))
 
         return story
 
@@ -1652,6 +1700,7 @@ class GeneradorPDF:
         story.append(Spacer(0, 6*mm))
 
         # 9. REGISTROS FOTOGRÁFICOS
+        story.append(CondPageBreak(24 * mm))
         story.append(Paragraph("9. REGISTROS FOTOGRÁFICOS", styles["HSection"]))
         story.append(Spacer(0, 3*mm))
         
@@ -1670,9 +1719,10 @@ class GeneradorPDF:
             # Si no hay fotos, agregar un mensaje
             story.append(Paragraph("No hay registros fotográficos.", styles["Body"]))
 
-        # Sección de firmas y sello al final (compacta, en la parte inferior)
-        story.append(Spacer(0, 5*mm))
-        story.append(self._crear_seccion_firmas(total_w, self.data["encabezado"]))
+        # Sección de firmas y sello al final: no dividir entre páginas.
+        firma = self._crear_seccion_firmas(total_w, self.data["encabezado"])
+        story.append(CondPageBreak(SIGNATURE_BLOCK_MIN_SPACE))
+        story.append(KeepTogether([Spacer(0, 5*mm), firma]))
 
         return story
 
