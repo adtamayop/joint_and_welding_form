@@ -29,6 +29,9 @@ class ReporteParticulasMagneticas:
             
             dp_copy = dp.copy()
             dp_copy['numero_informe'] = numero_informe
+            firmas = dp_copy.get("firmas", {})
+            if isinstance(firmas, dict) and firmas.get("firma_2") and not dp_copy.get("reviso"):
+                dp_copy["reviso"] = firmas.get("firma_2")
             return dp_copy
             
         elif 'bloque_1' in st.session_state:
@@ -46,6 +49,8 @@ class ReporteParticulasMagneticas:
                 'proyecto': bloque_1.get('proyecto', 'Proyecto'),
                 'ubicacion': bloque_1.get('lugar', 'Lugar'),
                 'inspector': bloque_1.get('elaboro', 'Ing. Andrés López'),
+                'reviso': bloque_1.get('firmas', {}).get('firma_2', bloque_1.get('elaboro', 'Ing. Andrés López')) if isinstance(bloque_1.get('firmas', {}), dict) else bloque_1.get('elaboro', 'Ing. Andrés López'),
+                'firmas': bloque_1.get('firmas', {}),
                 'contratista': bloque_1.get('contratista', 'Contratista'),
                 'subproyecto': bloque_1.get('subproyecto', 'Subproyecto')
             }

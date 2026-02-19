@@ -772,6 +772,11 @@ class GeneradorPDF:
             fontSize=8,
             leading=9
         )
+        style_name_center = ParagraphStyle(
+            name="FirmaNameCenter",
+            parent=style_name,
+            alignment=1
+        )
         style_company = ParagraphStyle(
             name="CompanyName",
             fontName="Helvetica-Bold",
@@ -788,6 +793,8 @@ class GeneradorPDF:
         )
         
         # Obtener datos del encabezado
+        elaboro_nombre = encabezado.get("elaboro", "")
+        reviso_nombre = encabezado.get("reviso", "")
         cliente_nombre = encabezado.get("cliente", "Concreacero")
         
         # Altura reducida para las secciones de firma
@@ -857,15 +864,21 @@ class GeneradorPDF:
         ]))
         
         fila2 = [celda_elaboro, celda_reviso_completa, Paragraph("", style_name)]
-        
-        # Fila 3: Nombre empresa (spanning columnas Elaboró y Revisó)
+
+        # Fila 3: Nombres centrados
+        fila3 = [
+            Paragraph(elaboro_nombre, style_name_center),
+            Paragraph(reviso_nombre, style_name_center),
+            Paragraph("", style_name),
+        ]
+
+        # Fila 4: Nombre empresa (spanning columnas Elaboró y Revisó)
         empresa_text = Paragraph("Joint and Welding Ingenieros S.A.S.", style_company)
-        fila3 = [empresa_text, Paragraph("", style_name), Paragraph("", style_name)]
-        
+        fila4 = [empresa_text, Paragraph("", style_name), Paragraph("", style_name)]
+
         # Crear tabla principal
-        data = [fila1, fila2, fila3]
-        # Alturas reducidas: fila de etiquetas más pequeña, fila de contenido más compacta
-        row_heights = [6*mm, altura_firma + 5*mm, 5*mm]
+        data = [fila1, fila2, fila3, fila4]
+        row_heights = [6*mm, altura_firma + 5*mm, 6*mm, 5*mm]
         t = Table(
             data,
             colWidths=[col_elaboro, col_reviso, col_cliente],
@@ -877,23 +890,33 @@ class GeneradorPDF:
         # Estilos de la tabla (iguales al informe de inspección visual)
         t.setStyle(TableStyle([
             ("BOX", (0,0), (-1,-1), 1.0, colors.black),
-            # Línea horizontal debajo del contenido (fila 1)
-            ("LINEBELOW", (0,1), (-1,1), 1.0, colors.black),  # Línea debajo del contenido
-            # Línea vertical entre Revisó y Cliente (columna 1 y 2)
             ("LINEAFTER", (1,0), (1,-1), 1.0, colors.black),
-            # NO línea entre Elaboró y Revisó (columna 0 y 1)
-            # NO línea debajo de las etiquetas (fila 0)
+            ("LINEABOVE", (0,3), (1,3), 1.0, colors.black),
             ("VALIGN", (0,0), (-1,-1), "TOP"),
             ("LEFTPADDING", (0,0), (-1,-1), 3),
             ("RIGHTPADDING", (0,0), (-1,-1), 3),
             ("TOPPADDING", (0,0), (-1,-1), 2),
             ("BOTTOMPADDING", (0,0), (-1,-1), 2),
-            # Hacer que el nombre de la empresa ocupe las columnas 0 y 1 (Elaboró y Revisó)
-            ("SPAN", (0,2), (1,2)),
+            ("SPAN", (2,0), (2,2)),
+            ("ALIGN", (2,0), (2,2), "CENTER"),
+            ("VALIGN", (2,0), (2,2), "MIDDLE"),
+            ("SPAN", (0,3), (1,3)),
+            ("ALIGN", (0,3), (1,3), "CENTER"),
             ("ALIGN", (0,2), (1,2), "CENTER"),
         ]))
         
         return t
+
+    def _resolver_reviso(self, datos_proyecto: Dict[str, Any]) -> str:
+        firmas = datos_proyecto.get("firmas", {})
+        if isinstance(firmas, dict):
+            reviso = firmas.get("firma_2", "")
+            if reviso:
+                return reviso
+        reviso = datos_proyecto.get("reviso", "")
+        if reviso:
+            return reviso
+        return datos_proyecto.get("inspector", "Inspector")
 
     def _formatear_datos_particulas_magneticas(self, datos_proyecto: Dict[str, Any],
                                               datos_inspeccion: Dict[str, Any]) -> Dict[str, Any]:
@@ -906,6 +929,7 @@ class GeneradorPDF:
                 "subproyecto": datos_proyecto.get('subproyecto', 'Subproyecto'),
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "elaboro": datos_proyecto.get('inspector', 'Inspector'),
+                "reviso": self._resolver_reviso(datos_proyecto),
                 "rep": datos_proyecto.get('numero_informe', 'T1234I1025'),
                 "fecha": datos_proyecto.get('fecha', 'DD/MMM/YYYY'),
                 "lugar": datos_proyecto.get('ubicacion', 'Ubicación'),
@@ -960,6 +984,7 @@ class GeneradorPDF:
                 "subproyecto": datos_proyecto.get('subproyecto', 'Subproyecto'),
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "elaboro": datos_proyecto.get('inspector', 'Inspector'),
+                "reviso": self._resolver_reviso(datos_proyecto),
                 "rep": datos_proyecto.get('numero_informe', 'T1234I1035'),
                 "fecha": datos_proyecto.get('fecha', 'DD/MMM/YYYY'),
                 "lugar": datos_proyecto.get('ubicacion', 'Ubicación'),
@@ -1739,6 +1764,8 @@ class GeneradorPDF:
                 "proyecto": datos_proyecto.get('proyecto', 'Proyecto'),
                 "ubicacion": datos_proyecto.get('ubicacion', 'Lugar'),
                 "inspector": datos_proyecto.get('inspector', 'Ing. Andrés López'),
+                "elaboro": datos_proyecto.get('inspector', 'Ing. Andrés López'),
+                "reviso": self._resolver_reviso(datos_proyecto),
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "subproyecto": datos_proyecto.get('subproyecto', 'Subproyecto'),
                 "proceso_soldadura": datos_inspeccion.get('proceso_soldadura', 'SMAW'),
@@ -1832,6 +1859,7 @@ class GeneradorPDF:
                 "proyecto": datos_proyecto.get('proyecto', 'Proyecto'),
                 "lugar": datos_proyecto.get('ubicacion', 'Lugar'),
                 "elaboro": datos_proyecto.get('inspector', 'Ing. Andrés López'),
+                "reviso": self._resolver_reviso(datos_proyecto),
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "subproyecto": datos_proyecto.get('subproyecto', 'Subproyecto'),
                 "proceso_soldadura": ', '.join(datos_inspeccion.get('proceso', ['SMAW'])) if isinstance(datos_inspeccion.get('proceso'), list) else datos_inspeccion.get('proceso', 'SMAW'),

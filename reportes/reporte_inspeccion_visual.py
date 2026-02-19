@@ -131,6 +131,9 @@ class ReporteInspeccionVisual:
             
             dp_copy = dp.copy()
             dp_copy['numero_informe'] = numero_informe
+            firmas = dp_copy.get("firmas", {})
+            if isinstance(firmas, dict) and firmas.get("firma_2") and not dp_copy.get("reviso"):
+                dp_copy["reviso"] = firmas.get("firma_2")
             return dp_copy
             
         elif 'bloque_1' in st.session_state:
@@ -148,6 +151,8 @@ class ReporteInspeccionVisual:
                 'proyecto': b1.get('proyecto', 'Proyecto'),
                 'ubicacion': b1.get('lugar', 'Lugar'),
                 'inspector': b1.get('elaboro', 'Ing. Andrés López'),
+                'reviso': b1.get('firmas', {}).get('firma_2', b1.get('elaboro', 'Ing. Andrés López')) if isinstance(b1.get('firmas', {}), dict) else b1.get('elaboro', 'Ing. Andrés López'),
+                'firmas': b1.get('firmas', {}),
                 'contratista': b1.get('contratista', 'Contratista'),
                 'subproyecto': b1.get('subproyecto', 'Subproyecto')
             }
@@ -278,6 +283,15 @@ class ReporteInspeccionVisual:
         return self.output_path
     
     def _formatear(self, dp: Dict[str, Any], di: Dict[str, Any]) -> Dict[str, Any]:
+        firmas = dp.get("firmas", {})
+        reviso = ""
+        if isinstance(firmas, dict):
+            reviso = firmas.get("firma_2", "")
+        if not reviso:
+            reviso = dp.get("reviso", "")
+        if not reviso:
+            reviso = dp.get("inspector", "")
+
         return {
             'encabezado': {
                 'norma': di.get('norma', 'AWS D1.1 2020'),
@@ -286,6 +300,7 @@ class ReporteInspeccionVisual:
                 'subproyecto': dp.get('subproyecto', ''),
                 'contratista': dp.get('contratista', ''),
                 'elaboro': dp.get('inspector', ''),
+                'reviso': reviso,
                 'rep': dp.get('numero_informe', ''),
                 'fecha': dp.get('fecha', ''),
                 'lugar': dp.get('ubicacion', ''),
@@ -1303,6 +1318,11 @@ class ReporteInspeccionVisual:
             fontSize=8,
             leading=9
         )
+        style_name_center = ParagraphStyle(
+            name="FirmaNameCenter",
+            parent=style_name,
+            alignment=1
+        )
         style_company = ParagraphStyle(
             name="CompanyName",
             fontName="Helvetica-Bold",
@@ -1320,6 +1340,7 @@ class ReporteInspeccionVisual:
         
         # Obtener datos del encabezado
         elaboro_nombre = encabezado.get("elaboro", "")
+        reviso_nombre = encabezado.get("reviso", "")
         cliente_nombre = encabezado.get("cliente", "Concreacero")
         
         # Altura reducida para las secciones de firma
@@ -1377,18 +1398,25 @@ class ReporteInspeccionVisual:
             celda_reviso_interna,
             Paragraph("", style_name)  # Columna cliente vacía
         ]
-        
-        # Fila 3: Nombre de la empresa (spanning 2 columnas: Elaboró y Revisó)
-        empresa_text = Paragraph("Joint and Welding Ingenieros S.A.S.", style_company)
+
+        # Fila 3: Nombres centrados de personas
         fila3 = [
+            Paragraph(elaboro_nombre, style_name_center),
+            Paragraph(reviso_nombre, style_name_center),
+            Paragraph("", style_name)
+        ]
+        
+        # Fila 4: Nombre de la empresa (spanning 2 columnas: Elaboró y Revisó)
+        empresa_text = Paragraph("Joint and Welding Ingenieros S.A.S.", style_company)
+        fila4 = [
             empresa_text,
             Paragraph("", style_name),  # Columna revisó vacía (será spanneada)
             Paragraph("", style_name)  # Columna cliente vacía
         ]
         
         # Crear tabla principal con alturas de fila reducidas
-        data = [fila1, fila2, fila3]
-        row_heights = [6*mm, altura_firma + 2*mm, 5*mm]  # Alturas más pequeñas
+        data = [fila1, fila2, fila3, fila4]
+        row_heights = [6*mm, altura_firma + 2*mm, 6*mm, 5*mm]
         t = Table(
             data,
             colWidths=[col_elaboro, col_reviso, col_cliente],
@@ -1400,14 +1428,18 @@ class ReporteInspeccionVisual:
         # Estilos de la tabla más compactos
         t.setStyle(TableStyle([
             ("BOX", (0,0), (-1,-1), 0.8, colors.black),
-            ("INNERGRID", (0,0), (-1,-1), 0.8, colors.black),
+            ("LINEAFTER", (1,0), (1,-1), 0.8, colors.black),
+            ("LINEABOVE", (0,3), (1,3), 0.8, colors.black),
             ("VALIGN", (0,0), (-1,-1), "TOP"),
             ("LEFTPADDING", (0,0), (-1,-1), 2),
             ("RIGHTPADDING", (0,0), (-1,-1), 2),
             ("TOPPADDING", (0,0), (-1,-1), 2),
             ("BOTTOMPADDING", (0,0), (-1,-1), 2),
-            # Hacer que el nombre de la empresa ocupe las columnas 0 y 1 (Elaboró y Revisó)
-            ("SPAN", (0,2), (1,2)),
+            ("SPAN", (2,0), (2,2)),
+            ("ALIGN", (2,0), (2,2), "CENTER"),
+            ("VALIGN", (2,0), (2,2), "MIDDLE"),
+            ("SPAN", (0,3), (1,3)),
+            ("ALIGN", (0,3), (1,3), "CENTER"),
             ("ALIGN", (0,2), (1,2), "CENTER"),
         ]))
         

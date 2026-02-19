@@ -147,7 +147,6 @@ with tab1:
         "lugar": "Bogotá, Colombia",
         "firma_1": "Andrés López",
         "firma_2": "Andrés López",
-        "firma_3": "Cliente",
         "modulos_seleccionados": modulos_default
     }
 
@@ -156,7 +155,6 @@ with tab1:
         if "firmas" in valores:
             valores["firma_1"] = valores["firmas"].get("firma_1", valores.get("elaboro", def_valores["firma_1"]))
             valores["firma_2"] = valores["firmas"].get("firma_2", def_valores["firma_2"])
-            valores["firma_3"] = valores["firmas"].get("firma_3", def_valores["firma_3"])
     else:
         valores = def_valores.copy()
         # Inicializar la configuración de páginas
@@ -225,7 +223,7 @@ with tab1:
     # Sección de firmas en un contenedor expandible
     with st.expander("👥 Firmas", expanded=True):
         st.markdown("Configure las firmas necesarias para el informe")
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         firma_1 = elaboro
         with col1:
             st.text_input(
@@ -242,8 +240,6 @@ with tab1:
                 index=inspectores.index(firma_2_default) if firma_2_default in inspectores else inspectores.index(elaboro) if elaboro in inspectores else 0,
                 help="Inspector que revisa el informe",
             )
-        with col3:
-            firma_3 = st.text_input("Firma 3", valores["firma_3"], help="Cliente o representante")
 
 with tab2:
     st.subheader("🎯 Selección de Módulos")
@@ -325,8 +321,7 @@ with col2:
                 "norma_global": norma_global,
                 "firmas": {
                     "firma_1": firma_1,
-                    "firma_2": firma_2,
-                    "firma_3": firma_3
+                    "firma_2": firma_2
                 }
             }
             
@@ -345,8 +340,7 @@ with col2:
                 "lugar": lugar,
                 "firmas": {
                     "firma_1": firma_1,
-                    "firma_2": firma_2,
-                    "firma_3": firma_3
+                    "firma_2": firma_2
                 },
                 "modulos_seleccionados": modulos_seleccionados
             }
