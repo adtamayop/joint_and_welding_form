@@ -375,6 +375,18 @@ class ReporteInspeccionVisual:
         doc.addPageTemplates([template])
 
         story = self._build_story(data, doc.width)
+        numero = enc.get("rep", "") or enc.get("numero_informe", "")
+        pdf_title = "INFORME_INSPECCION_VISUAL"
+        if numero:
+            pdf_title = f"{pdf_title}_{numero}"
+        pdf_author = "Joint and Welding Ingenieros S.A.S."
+        pdf_subject = f"Informe de inspeccion visual - {enc.get('cliente', 'Cliente')}"
+        pdf_creator = "Joint and Welding Reporteador"
+        doc.title = pdf_title
+        doc.author = pdf_author
+        doc.subject = pdf_subject
+        doc.creator = pdf_creator
+
         doc.build(story, canvasmaker=NumberedCanvas)
         
         # Después de construir, marcar la última página en el canvas si tenemos la referencia

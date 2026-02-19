@@ -188,6 +188,25 @@ class GeneradorPDF:
             story = self._build_story_ultrasonido(doc.width)
         else:
             story = self._build_story(doc.width)
+
+        title_by_type = {
+            "visual": "INFORME_INSPECCION_VISUAL",
+            "liquidos_penetrantes": "INFORME_INSPECCION_LIQUIDOS_PENETRANTES",
+            "particulas_magneticas": "INFORME_INSPECCION_PARTICULAS_MAGNETICAS",
+            "ultrasonido": "INFORME_INSPECCION_ULTRASONIDO",
+        }
+        pdf_title = title_by_type.get(report_type, "INFORME_INSPECCION")
+        numero = enc.get("rep", "") or enc.get("numero_informe", "")
+        if numero:
+            pdf_title = f"{pdf_title}_{numero}"
+        pdf_author = "Joint and Welding Ingenieros S.A.S."
+        pdf_subject = f"Informe de inspeccion - {enc.get('cliente', 'Cliente')}"
+        pdf_creator = "Joint and Welding Reporteador"
+        doc.title = pdf_title
+        doc.author = pdf_author
+        doc.subject = pdf_subject
+        doc.creator = pdf_creator
+
         doc.build(story, canvasmaker=NumberedCanvas)
     
     def _draw_header(self, canv, doc, enc, report_type="visual"):
