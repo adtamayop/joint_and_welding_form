@@ -9,6 +9,7 @@ from utils import (
     get_tipos_soldadura_seleccionados, procesos_soldadura, tipos_soldadura,
     get_esquema_elementos_global
 )
+from save_state import persist_session_state
 
 st.set_page_config(
     page_title="2 Inspección Visual",
@@ -418,13 +419,25 @@ else:
                 esquema_global.pop(i)
                 st.rerun()
 
-detalle_resultados = st.text_area("DETALLE DE ELEMENTOS INSPECCIONADOS Y RESULTADOS:", "")
+detalle_guardado = st.session_state.get("bloque_2_1", {}).get("detalle_resultados", "")
+if "detalle_resultados_2_1" not in st.session_state:
+    st.session_state.detalle_resultados_2_1 = detalle_guardado
+detalle_resultados = st.text_area(
+    "DETALLE DE ELEMENTOS INSPECCIONADOS Y RESULTADOS:",
+    key="detalle_resultados_2_1"
+)
 
 st.write("---")
 
 # Sección 5: Observaciones y Registros
 st.subheader("Observaciones y Registros")
-observaciones_generales = st.text_area("OBSERVACIONES GENERALES:", "")
+observaciones_guardadas = st.session_state.get("bloque_2_1", {}).get("observaciones_generales", "")
+if "observaciones_generales_2_1" not in st.session_state:
+    st.session_state.observaciones_generales_2_1 = observaciones_guardadas
+observaciones_generales = st.text_area(
+    "OBSERVACIONES GENERALES:",
+    key="observaciones_generales_2_1"
+)
 
 # Sección 6: Registros Fotográficos
 st.subheader("Registros Fotográficos")
@@ -544,4 +557,5 @@ if st.button("Guardar Datos"):
             }
             for img in st.session_state.imagenes_2_1
         ]
-    } 
+    }
+    persist_session_state()

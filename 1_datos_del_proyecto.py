@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from utils import cargar_inspectores, cargar_normas, generar_numero_informe
+from save_state import persist_session_state
 
 
 def formatear_fecha_para_display(fecha):
@@ -347,7 +348,8 @@ with col2:
                 st.Page(modulos_disponibles[modulo]["archivo"], title=modulos_disponibles[modulo]["titulo_sidebar"])
                 for modulo in modulos_seleccionados
             ]
-            
+
+            persist_session_state()
             st.success("✅ Configuración guardada correctamente")
             st.balloons()
             st.rerun() 

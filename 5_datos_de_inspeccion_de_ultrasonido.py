@@ -9,6 +9,7 @@ from utils import (
     get_tipos_soldadura_seleccionados, procesos_soldadura, tipos_soldadura,
     get_esquema_elementos_global, cargar_palpadores, get_frecuencias_palpadores
 )
+from save_state import persist_session_state
 
 st.set_page_config(
     page_title="5 Inspección de Ultrasonido",
@@ -686,4 +687,5 @@ if st.button("Guardar Datos", key="guardar_datos_ut"):
         "esquema_inspeccion": st.session_state[esquema_key],  # Usar esquema independiente
         "observaciones_generales": observaciones_generales,
         "registros_fotograficos": datos_finales["imagenes"]
-    } 
+    }
+    persist_session_state()

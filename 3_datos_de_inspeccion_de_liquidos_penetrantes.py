@@ -9,6 +9,7 @@ from utils import (
     get_tipos_soldadura_seleccionados, procesos_soldadura, tipos_soldadura,
     get_esquema_elementos_global
 )
+from save_state import persist_session_state
 
 st.set_page_config(
     page_title="3 Datos de Inspección de Líquidos Penetrantes",
@@ -671,5 +672,6 @@ if st.button("Guardar Datos", key="guardar_datos_pt"):
         "detalle_resultados": detalle_resultados,
         "observaciones_generales": observaciones_generales,
         "registros_fotograficos": datos_finales["imagenes"]
-    } 
-    st.rerun() 
+    }
+    persist_session_state()
+    st.rerun()

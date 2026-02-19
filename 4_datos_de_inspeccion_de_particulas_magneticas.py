@@ -9,6 +9,7 @@ from utils import (
     get_tipos_soldadura_seleccionados, procesos_soldadura, tipos_soldadura,
     get_esquema_elementos_global
 )
+from save_state import persist_session_state
 
 st.set_page_config(
     page_title="4 Datos de Inspección de Partículas Magnéticas",
@@ -558,4 +559,5 @@ if st.button("Guardar Datos", key="guardar_datos_mt"):
         "observaciones_generales": observaciones_generales,
         "registros_fotograficos": datos_finales["imagenes"]
     }
-    st.rerun() 
+    persist_session_state()
+    st.rerun()

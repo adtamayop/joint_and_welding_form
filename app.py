@@ -1,8 +1,17 @@
 import streamlit as st
+from save_state import get_saved_at, restore_session_state
 
 # Modo de prueba: mostrar solo el módulo de inspección visual en la navegación
 SOLO_REPORTE_VISUAL = True
 MODULO_VISUAL = "2_datos_de_inspeccion_visual.py"
+
+# Restaurar estado persistido en disco (solo datos guardados manualmente).
+restored_from_disk = restore_session_state()
+saved_at = get_saved_at()
+if restored_from_disk and saved_at:
+    st.sidebar.success(f"Datos restaurados desde ultimo guardado ({saved_at})")
+if saved_at:
+    st.sidebar.caption(f"Ultimo guardado: {saved_at}")
 
 # Configuración inicial de páginas
 modulos_sidebar_titles = {
