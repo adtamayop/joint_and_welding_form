@@ -183,3 +183,16 @@ def get_saved_at() -> str:
     if isinstance(payload, dict):
         return str(payload.get("saved_at", ""))
     return ""
+
+
+def clear_persisted_state() -> None:
+    """Clears persisted form state from disk and current session."""
+    if os.path.exists(STATE_FILE):
+        try:
+            os.remove(STATE_FILE)
+        except OSError:
+            pass
+
+    for key in list(st.session_state.keys()):
+        if _should_persist_key(key):
+            del st.session_state[key]

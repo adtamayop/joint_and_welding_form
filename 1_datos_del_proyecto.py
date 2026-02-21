@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from utils import cargar_inspectores, cargar_normas, generar_numero_informe
-from save_state import persist_session_state
+from save_state import persist_session_state, clear_persisted_state
 
 
 def formatear_fecha_para_display(fecha):
@@ -135,18 +135,18 @@ if SOLO_REPORTE_VISUAL:
 with tab1:
     # Usar valores guardados si existen, si no usar por defecto
     def_valores = {
-        "cliente": "Nureon",
-        "proyecto": "Inspección de Estructuras",
-        "subproyecto": "Inspección No Destructiva",
-        "contratista": "Nureon S.A.S",
-        "numero_orden": "209",
-        "consecutivo_inicial": "462",
-        "elaboro": "Andrés López",
-        "norma_global": "AWS D1.1 2020",
+        "cliente": "",
+        "proyecto": "",
+        "subproyecto": "",
+        "contratista": "",
+        "numero_orden": "",
+        "consecutivo_inicial": "",
+        "elaboro": "",
+        "norma_global": "",
         "fecha": datetime.now().date(),
-        "lugar": "Bogotá, Colombia",
-        "firma_1": "Andrés López",
-        "firma_2": "Andrés López",
+        "lugar": "",
+        "firma_1": "",
+        "firma_2": "",
         "modulos_seleccionados": modulos_default
     }
 
@@ -183,13 +183,13 @@ with tab1:
             with col_orden:
                 numero_orden = st.text_input(
                     "Número de Orden", 
-                    valores.get("numero_orden", "209"), 
+                    valores.get("numero_orden", ""), 
                     help="Número de orden. Ej: 209"
                 )
             with col_consec:
                 consecutivo_inicial = st.text_input(
                     "Consecutivo Inicial", 
-                    valores.get("consecutivo_inicial", "462"), 
+                    valores.get("consecutivo_inicial", ""), 
                     help="Consecutivo del informe visual (3 dígitos). Ej: 462"
                 )
             
@@ -212,10 +212,16 @@ with tab1:
         with st.container():
             # Cargar lista de inspectores desde CSV
             inspectores = cargar_inspectores()
-            elaboro = st.selectbox("Elaboró", options=inspectores, index=inspectores.index(valores["elaboro"]) if valores["elaboro"] in inspectores else 0, help="Nombre del inspector que elabora el informe")
+            opciones_inspectores = [""] + inspectores
+            elaboro_actual = valores.get("elaboro", "")
+            elaboro_index = opciones_inspectores.index(elaboro_actual) if elaboro_actual in opciones_inspectores else 0
+            elaboro = st.selectbox("Elaboró", options=opciones_inspectores, index=elaboro_index, help="Nombre del inspector que elabora el informe")
             # Cargar lista de normas desde CSV
             normas = cargar_normas()
-            norma_global = st.selectbox("Norma global", options=normas, index=normas.index(valores["norma_global"]) if valores["norma_global"] in normas else 0, help="Norma de referencia para la inspección")
+            opciones_normas = [""] + normas
+            norma_actual = valores.get("norma_global", "")
+            norma_index = opciones_normas.index(norma_actual) if norma_actual in opciones_normas else 0
+            norma_global = st.selectbox("Norma global", options=opciones_normas, index=norma_index, help="Norma de referencia para la inspección")
             st.session_state["norma_global"] = norma_global
             fecha = st.date_input("Fecha", value=valores["fecha"] if hasattr(valores["fecha"], 'strftime') else datetime.now().date(), help="Fecha de la inspección")
             lugar = st.text_input("Lugar", valores["lugar"], help="Ubicación donde se realiza la inspección")
@@ -236,8 +242,8 @@ with tab1:
             firma_2_default = valores.get("firma_2", elaboro)
             firma_2 = st.selectbox(
                 "Revisó",
-                options=inspectores,
-                index=inspectores.index(firma_2_default) if firma_2_default in inspectores else inspectores.index(elaboro) if elaboro in inspectores else 0,
+                options=opciones_inspectores,
+                index=opciones_inspectores.index(firma_2_default) if firma_2_default in opciones_inspectores else opciones_inspectores.index(elaboro) if elaboro in opciones_inspectores else 0,
                 help="Inspector que revisa el informe",
             )
 
@@ -291,7 +297,7 @@ with tab2:
             st.warning("⚠️ No hay módulos seleccionados")
 
 # Botón de guardar en la parte inferior
-col1, col2, col3 = st.columns([1,2,1])
+col1, col2, col3 = st.columns([1,1,1])
 with col2:
     if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
         if SOLO_REPORTE_VISUAL:
@@ -359,3 +365,15 @@ with col2:
             st.success("✅ Configuración guardada correctamente")
             st.balloons()
             st.rerun() 
+
+with col3:
+    if st.button("🧹 Limpiar formulario", type="secondary", use_container_width=True):
+        clear_persisted_state()
+        st.session_state.pages_config = {
+            "modulos": [
+                st.Page(modulos_disponibles[modulo]["archivo"], title=modulos_disponibles[modulo]["titulo_sidebar"])
+                for modulo in modulos_default
+            ]
+        }
+        st.success("✅ Formulario limpiado y datos guardados eliminados")
+        st.rerun()
