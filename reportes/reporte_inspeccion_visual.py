@@ -18,7 +18,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as rl_canvas
 from reportlab.platypus import (
     BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle,
-    Image, Flowable, KeepInFrame, KeepTogether, CondPageBreak
+    Image, Flowable, KeepInFrame, KeepTogether, CondPageBreak, PageBreak
 )
 
 SIGNATURE_BLOCK_MIN_SPACE = 52 * mm
@@ -93,6 +93,31 @@ class EspacioFirma(Flowable):
     def draw(self):
         # No dibujar nada, solo ocupar espacio
         pass
+
+
+class LegendWithNextPageNote(Flowable):
+    """Muestra leyenda inmediatamente o inserta aviso si debe pasar a la pagina siguiente."""
+
+    NOTE_TEXT = "Tabla de convenciones en la página siguiente."
+
+    def __init__(self, legend, note_style, spacer_h=3 * mm):
+        super().__init__()
+        self.legend = legend
+        self.note_style = note_style
+        self.spacer_h = spacer_h
+        self._legend_h = 0
+
+    def wrap(self, availW, availH):
+        _, self._legend_h = self.legend.wrap(availW, 10000 * mm)
+        return availW, self._legend_h + self.spacer_h
+
+    def draw(self):
+        self.legend.wrapOn(self.canv, self.width, self._legend_h)
+        self.legend.drawOn(self.canv, 0, 0)
+
+    def split(self, availW, availH):
+        note = Paragraph(self.NOTE_TEXT, self.note_style)
+        return [note, PageBreak(), Spacer(0, self.spacer_h), self.legend]
 
 # ---------------- Flowable para marcar páginas con abreviaciones -----------
 class MarkAbbreviationPage(Flowable):
@@ -909,7 +934,20 @@ class ReporteInspeccionVisual:
             ("BACKGROUND", (3,1), (3,1), color_re_inspeccionar),
         ]))
 
-        return KeepTogether([discon_table, cal_table])
+        # Un solo contenedor no-divisible para evitar problemas de wrap con KeepTogether
+        leyenda = Table(
+            [[discon_table], [cal_table]],
+            colWidths=[total_w],
+            splitByRow=0,
+            splitInRow=0,
+        )
+        leyenda.setStyle(TableStyle([
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        return leyenda
 
     def _section_text_box(self, title, text, total_w):
         rows = [text] if isinstance(text, str) else text
@@ -1024,12 +1062,15 @@ class ReporteInspeccionVisual:
             ("TOPPADDING", (0, 0), (-1, -1), 4),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ]))
+        cell.splitByRow = 0
+        cell.splitInRow = 0
         return cell
 
     def _build_story(self, data, total_w, bloques=None):
         styles = getSampleStyleSheet()
         styles.add(ParagraphStyle(name="HSection", fontName="Helvetica-Bold", fontSize=10, spaceBefore=6, spaceAfter=4))
         styles.add(ParagraphStyle(name="Body", fontName="Helvetica", fontSize=9, leading=12))
+        styles.add(ParagraphStyle(name="LegendNextPageNote", fontName="Helvetica-Bold", fontSize=9, alignment=1, spaceAfter=2))
 
         story = []
 
@@ -1104,54 +1145,15 @@ class ReporteInspeccionVisual:
         esquema = data.get("esquema", [])
         esquema_imgs = [e for e in esquema if isinstance(e, dict) and e.get("archivo")]
         if esquema_imgs:
-            # armamos la sección completa como una lista de flowables
-            bloque = []
+            story.append(Paragraph(f"{seccion}. ESQUEMA ESTRUCTURA INSPECCIONADA:", styles["HSection"]))
+            story.append(Spacer(0, 2 * mm))
 
-            titulo = Paragraph(f"{seccion}. ESQUEMA ESTRUCTURA INSPECCIONADA:", styles["HSection"])
-            bloque.append(titulo)
-            bloque.append(Spacer(0, 2 * mm))
-
-            if len(esquema_imgs) == 1:
-                # UNA SOLA IMAGEN → usar todo el ancho
-                col_w = total_w
-                cell = self._esquema_cell(esquema_imgs[0], 1, col_w, styles, full_page=True)
-                # _esquema_cell ya devuelve una Table, la añadimos directo al story
-                bloque.append(cell)
-            else:
-                # DOS O MÁS IMÁGENES → rejilla de 2 columnas como antes
-                col_w = total_w / 2.0
-                rows = []
-                idx = 1
-                for i in range(0, len(esquema_imgs), 2):
-                    left = self._esquema_cell(esquema_imgs[i], idx, col_w, styles)
-                    idx += 1
-
-                    if i + 1 < len(esquema_imgs):
-                        right = self._esquema_cell(esquema_imgs[i + 1], idx, col_w, styles)
-                        idx += 1
-                    else:
-                        right = Table([[Box(col_w - 8 * mm, 45 * mm, "")]], colWidths=[col_w])
-                        right.setStyle(TableStyle([
-                            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                            ("LEFTPADDING", (0, 0), (-1, -1), 4),
-                            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-                            ("TOPPADDING", (0, 0), (-1, -1), 4),
-                            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-                        ]))
-
-                    rows.append([left, right])
-
-                if rows:
-                    grid = Table(rows, colWidths=[col_w, col_w])
-                    grid.setStyle(TableStyle([
-                        ("GRID", (0, 0), (-1, -1), 0.8, colors.black),
-                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ]))
-                    bloque.append(grid)
-            # 👉 Aquí se asegura que el título + imagen NUNCA se separen
-            story.append(KeepTogether(bloque))
-
+            col_w = total_w
+            for idx, esquema_item in enumerate(esquema_imgs, start=1):
+                # Una imagen por fila con ancho completo.
+                # El cell encapsula imagen + título + comentario para evitar separación.
+                cell = self._esquema_cell(esquema_item, idx, col_w, styles, full_page=True)
+                story.append(cell)
             story.append(Spacer(0, 6 * mm))
             seccion += 1
 
@@ -1250,9 +1252,8 @@ class ReporteInspeccionVisual:
             t.setStyle(TableStyle(style_list))
             story.append(t)
             # Agregar leyenda de disconformidades debajo de la tabla
-            story.append(Spacer(0, 3 * mm))
             leyenda = self._crear_leyenda_disconformidades(total_w)
-            story.append(leyenda)
+            story.append(LegendWithNextPageNote(leyenda, styles["LegendNextPageNote"], spacer_h=3 * mm))
             story.append(Spacer(0, 6 * mm))
             seccion += 1
 
@@ -1275,28 +1276,29 @@ class ReporteInspeccionVisual:
         if imgs:
             col_w = total_w / 2.0
             rows = []
+            odd_last_row = False
             idx = 1
             for i in range(0, len(imgs), 2):
                 left = self._foto_cell(imgs[i], idx, col_w, styles); idx += 1
                 if i + 1 < len(imgs):
                     right = self._foto_cell(imgs[i+1], idx, col_w, styles); idx += 1
+                    rows.append([left, right])
                 else:
-                    right = Table([[Box(col_w-8*mm, 45*mm, "")]], colWidths=[col_w])
-                    right.setStyle(TableStyle([
-                        ("ALIGN", (0,0), (-1,-1), "CENTER"),
-                        ("VALIGN",(0,0), (-1,-1), "TOP"),
-                        ("LEFTPADDING",(0,0), (-1,-1), 4),
-                        ("RIGHTPADDING",(0,0), (-1,-1), 4),
-                        ("TOPPADDING",(0,0), (-1,-1), 4),
-                        ("BOTTOMPADDING",(0,0), (-1,-1), 4),
-                    ]))
-                rows.append([left, right])
+                    odd_last_row = True
+                    rows.append([left, ""])
 
             grid = Table(rows, colWidths=[col_w, col_w])
-            grid.setStyle(TableStyle([
+            style_list = [
                 ("GRID", (0,0), (-1,-1), 0.8, colors.black),
                 ("VALIGN", (0,0), (-1,-1), "TOP"),
-            ]))
+            ]
+            if odd_last_row and rows:
+                last_row = len(rows) - 1
+                style_list.extend([
+                    ("SPAN", (0, last_row), (1, last_row)),
+                    ("ALIGN", (0, last_row), (1, last_row), "CENTER"),
+                ])
+            grid.setStyle(TableStyle(style_list))
             story.append(grid)
         else:
             story.append(Paragraph("No se registraron fotografías en este informe.", styles["Body"]))
