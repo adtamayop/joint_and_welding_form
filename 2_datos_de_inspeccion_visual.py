@@ -232,18 +232,24 @@ for fase in fases_items:
             for idx in phase_indices:
                 st.session_state.tabla_fases_2_1[idx]["aplica"] = "No Aplica"
                 st.session_state.tabla_fases_2_1[idx]["resultado"] = "No Aplica"
+                st.session_state[f"fase_aplica_2_1_{idx}"] = "No Aplica"
+                st.session_state[f"fase_resultado_2_1_{idx}"] = "No Aplica"
             st.rerun()
     with action_col_2:
         if st.button("Marcar sección como Fuera de Alcance", key=f"fase_fuera_{fase['fase']}"):
             for idx in phase_indices:
                 st.session_state.tabla_fases_2_1[idx]["aplica"] = "Fuera de Alcance"
                 st.session_state.tabla_fases_2_1[idx]["resultado"] = "Fuera de Alcance"
+                st.session_state[f"fase_aplica_2_1_{idx}"] = "Fuera de Alcance"
+                st.session_state[f"fase_resultado_2_1_{idx}"] = "Fuera de Alcance"
             st.rerun()
     with action_col_3:
         if st.button("Restablecer sección", key=f"fase_reset_{fase['fase']}"):
             for idx in phase_indices:
                 st.session_state.tabla_fases_2_1[idx]["aplica"] = "Aplica"
                 st.session_state.tabla_fases_2_1[idx]["resultado"] = "Satisfactorio"
+                st.session_state[f"fase_aplica_2_1_{idx}"] = "Aplica"
+                st.session_state[f"fase_resultado_2_1_{idx}"] = "Satisfactorio"
             st.rerun()
 
     # Encabezados
@@ -257,35 +263,41 @@ for fase in fases_items:
         fila = st.session_state.tabla_fases_2_1[idx]
         c1, c2, c3, c4 = st.columns([3, 2, 2, 5])
         c1.write(fila["item"])
-        st.session_state.tabla_fases_2_1[idx]["aplica"] = c2.selectbox(
+        aplica_key = f"fase_aplica_2_1_{idx}"
+        resultado_key = f"fase_resultado_2_1_{idx}"
+
+        aplica_sel = c2.selectbox(
             f"Aplica para {fila['item']}",
             options=opciones_aplica,
             index=opciones_aplica.index(fila["aplica"]),
-            key=f"fase_aplica_2_1_{fase['fase']}_{i}",
+            key=aplica_key,
             label_visibility="collapsed"
         )
-        aplica_val = st.session_state.tabla_fases_2_1[idx]["aplica"]
+        st.session_state.tabla_fases_2_1[idx]["aplica"] = aplica_sel
+        aplica_val = aplica_sel
         if aplica_val == "Aplica":
             # Obtener el resultado actual y validar que esté en las opciones disponibles
-            resultado_actual = fila.get("resultado", "Satisfactorio")
+            resultado_actual = st.session_state.tabla_fases_2_1[idx].get("resultado", "Satisfactorio")
             if resultado_actual not in opciones_resultado:
                 resultado_actual = "Satisfactorio"
-            
-            st.session_state.tabla_fases_2_1[idx]["resultado"] = c3.selectbox(
+
+            resultado_sel = c3.selectbox(
                 f"Resultado para {fila['item']}",
                 options=opciones_resultado,
                 index=opciones_resultado.index(resultado_actual),
-                key=f"fase_resultado_2_1_{fase['fase']}_{i}",
+                key=resultado_key,
                 label_visibility="collapsed"
             )
+            st.session_state.tabla_fases_2_1[idx]["resultado"] = resultado_sel
         else:
             # Si no aplica o está fuera de alcance, el resultado es igual al valor de aplica
             st.session_state.tabla_fases_2_1[idx]["resultado"] = aplica_val
+            st.session_state[resultado_key] = aplica_val
             c3.write(aplica_val)
         st.session_state.tabla_fases_2_1[idx]["observacion"] = c4.text_area(
             f"Observación para {fila['item']}",
             value=fila["observacion"],
-            key=f"fase_obs_2_1_{fase['fase']}_{i}",
+            key=f"fase_obs_2_1_{idx}",
             height=70,
             label_visibility="collapsed"
         )
