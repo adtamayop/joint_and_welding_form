@@ -841,6 +841,8 @@ class GeneradorPDF:
         # Obtener datos del encabezado
         elaboro_nombre = encabezado.get("elaboro", "")
         reviso_nombre = encabezado.get("reviso", "")
+        firma_elaboro_path = encabezado.get("firma_elaboro_path", "")
+        firma_reviso_path = encabezado.get("firma_reviso_path", "")
         cliente_nombre = encabezado.get("cliente", "Concreacero")
         
         # Altura reducida para las secciones de firma
@@ -860,7 +862,7 @@ class GeneradorPDF:
         
         # Fila 2: Contenido de las secciones
         # Columna Elaboró: solo espacio para firma (sin nombre, sin bordes)
-        espacio_firma_elaboro = EspacioFirma(col_elaboro - 8*mm, altura_firma)
+        espacio_firma_elaboro = self._firma_flowable(firma_elaboro_path, col_elaboro - 8*mm, altura_firma)
         celda_elaboro = Table([
             [espacio_firma_elaboro],
         ], colWidths=[col_elaboro - 8*mm], splitByRow=0, splitInRow=0)
@@ -876,7 +878,7 @@ class GeneradorPDF:
         # Espacio para sello (sin cuadro)
         espacio_sello = EspacioFirma(22*mm, 12*mm)
         # Espacio para firma sin caja
-        espacio_firma_reviso = EspacioFirma(col_reviso - 49*mm, altura_firma)
+        espacio_firma_reviso = self._firma_flowable(firma_reviso_path, col_reviso - 49*mm, altura_firma)
         # Espacio para NIT (sin texto)
         espacio_nit = EspacioFirma(22*mm, 4*mm)
         
@@ -964,6 +966,29 @@ class GeneradorPDF:
             return reviso
         return datos_proyecto.get("inspector", "Inspector")
 
+    def _resolver_firma_path(self, datos_proyecto: Dict[str, Any], person_name: str, firma_key: str) -> str:
+        firmas = datos_proyecto.get("firmas", {})
+        if isinstance(firmas, dict):
+            saved = firmas.get(firma_key, "")
+            if saved and os.path.exists(saved):
+                return saved
+        try:
+            from signature_registry import get_signature_for_person
+            return get_signature_for_person(person_name) or ""
+        except Exception:
+            return ""
+
+    def _firma_flowable(self, firma_path, width, height):
+        if firma_path and isinstance(firma_path, str) and os.path.exists(firma_path):
+            try:
+                img = Image(firma_path)
+                img.hAlign = "CENTER"
+                img._restrictSize(width, height)
+                return img
+            except Exception:
+                pass
+        return EspacioFirma(width, height)
+
     def _formatear_datos_particulas_magneticas(self, datos_proyecto: Dict[str, Any],
                                               datos_inspeccion: Dict[str, Any]) -> Dict[str, Any]:
         """Formatea los datos de inspección de partículas magnéticas para el PDF"""
@@ -976,6 +1001,8 @@ class GeneradorPDF:
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "elaboro": datos_proyecto.get('inspector', 'Inspector'),
                 "reviso": self._resolver_reviso(datos_proyecto),
+                "firma_elaboro_path": self._resolver_firma_path(datos_proyecto, datos_proyecto.get('inspector', 'Inspector'), "firma_1_path"),
+                "firma_reviso_path": self._resolver_firma_path(datos_proyecto, self._resolver_reviso(datos_proyecto), "firma_2_path"),
                 "rep": datos_proyecto.get('numero_informe', 'T1234I1025'),
                 "fecha": datos_proyecto.get('fecha', 'DD/MMM/YYYY'),
                 "lugar": datos_proyecto.get('ubicacion', 'Ubicación'),
@@ -1031,6 +1058,8 @@ class GeneradorPDF:
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "elaboro": datos_proyecto.get('inspector', 'Inspector'),
                 "reviso": self._resolver_reviso(datos_proyecto),
+                "firma_elaboro_path": self._resolver_firma_path(datos_proyecto, datos_proyecto.get('inspector', 'Inspector'), "firma_1_path"),
+                "firma_reviso_path": self._resolver_firma_path(datos_proyecto, self._resolver_reviso(datos_proyecto), "firma_2_path"),
                 "rep": datos_proyecto.get('numero_informe', 'T1234I1035'),
                 "fecha": datos_proyecto.get('fecha', 'DD/MMM/YYYY'),
                 "lugar": datos_proyecto.get('ubicacion', 'Ubicación'),
@@ -1780,6 +1809,8 @@ class GeneradorPDF:
                 "inspector": datos_proyecto.get('inspector', 'Ing. Andrés López'),
                 "elaboro": datos_proyecto.get('inspector', 'Ing. Andrés López'),
                 "reviso": self._resolver_reviso(datos_proyecto),
+                "firma_elaboro_path": self._resolver_firma_path(datos_proyecto, datos_proyecto.get('inspector', 'Ing. Andrés López'), "firma_1_path"),
+                "firma_reviso_path": self._resolver_firma_path(datos_proyecto, self._resolver_reviso(datos_proyecto), "firma_2_path"),
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "subproyecto": datos_proyecto.get('subproyecto', 'Subproyecto'),
                 "proceso_soldadura": datos_inspeccion.get('proceso_soldadura', 'SMAW'),
@@ -1874,6 +1905,8 @@ class GeneradorPDF:
                 "lugar": datos_proyecto.get('ubicacion', 'Lugar'),
                 "elaboro": datos_proyecto.get('inspector', 'Ing. Andrés López'),
                 "reviso": self._resolver_reviso(datos_proyecto),
+                "firma_elaboro_path": self._resolver_firma_path(datos_proyecto, datos_proyecto.get('inspector', 'Ing. Andrés López'), "firma_1_path"),
+                "firma_reviso_path": self._resolver_firma_path(datos_proyecto, self._resolver_reviso(datos_proyecto), "firma_2_path"),
                 "contratista": datos_proyecto.get('contratista', 'Contratista'),
                 "subproyecto": datos_proyecto.get('subproyecto', 'Subproyecto'),
                 "proceso_soldadura": ', '.join(datos_inspeccion.get('proceso', ['SMAW'])) if isinstance(datos_inspeccion.get('proceso'), list) else datos_inspeccion.get('proceso', 'SMAW'),

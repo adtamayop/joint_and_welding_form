@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime
 from utils import cargar_inspectores, cargar_normas, generar_numero_informe
 from save_state import persist_session_state, clear_persisted_state
+from signature_registry import get_signature_for_person
 
 
 def formatear_fecha_para_display(fecha):
@@ -247,6 +248,8 @@ with tab1:
                 help="Inspector que revisa el informe",
             )
 
+        st.caption("Las firmas automáticas se gestionan en código desde `config/signature_map.py`.")
+
 with tab2:
     st.subheader("🎯 Selección de Módulos")
     st.markdown("Seleccione los módulos que desea incluir en el informe:")
@@ -327,7 +330,9 @@ with col2:
                 "norma_global": norma_global,
                 "firmas": {
                     "firma_1": firma_1,
-                    "firma_2": firma_2
+                    "firma_2": firma_2,
+                    "firma_1_path": get_signature_for_person(firma_1),
+                    "firma_2_path": get_signature_for_person(firma_2),
                 }
             }
             
@@ -346,7 +351,9 @@ with col2:
                 "lugar": lugar,
                 "firmas": {
                     "firma_1": firma_1,
-                    "firma_2": firma_2
+                    "firma_2": firma_2,
+                    "firma_1_path": get_signature_for_person(firma_1),
+                    "firma_2_path": get_signature_for_person(firma_2),
                 },
                 "modulos_seleccionados": modulos_seleccionados
             }

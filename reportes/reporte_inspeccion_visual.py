@@ -310,12 +310,29 @@ class ReporteInspeccionVisual:
     def _formatear(self, dp: Dict[str, Any], di: Dict[str, Any]) -> Dict[str, Any]:
         firmas = dp.get("firmas", {})
         reviso = ""
+        firma_elaboro_path = ""
+        firma_reviso_path = ""
         if isinstance(firmas, dict):
             reviso = firmas.get("firma_2", "")
+            firma_elaboro_path = firmas.get("firma_1_path", "")
+            firma_reviso_path = firmas.get("firma_2_path", "")
         if not reviso:
             reviso = dp.get("reviso", "")
         if not reviso:
             reviso = dp.get("inspector", "")
+
+        if not firma_elaboro_path:
+            try:
+                from signature_registry import get_signature_for_person
+                firma_elaboro_path = get_signature_for_person(dp.get("inspector", "")) or ""
+            except Exception:
+                firma_elaboro_path = ""
+        if not firma_reviso_path:
+            try:
+                from signature_registry import get_signature_for_person
+                firma_reviso_path = get_signature_for_person(reviso) or ""
+            except Exception:
+                firma_reviso_path = ""
 
         return {
             'encabezado': {
@@ -326,6 +343,8 @@ class ReporteInspeccionVisual:
                 'contratista': dp.get('contratista', ''),
                 'elaboro': dp.get('inspector', ''),
                 'reviso': reviso,
+                'firma_elaboro_path': firma_elaboro_path,
+                'firma_reviso_path': firma_reviso_path,
                 'rep': dp.get('numero_informe', ''),
                 'fecha': dp.get('fecha', ''),
                 'lugar': dp.get('ubicacion', ''),
@@ -1310,6 +1329,17 @@ class ReporteInspeccionVisual:
 
         return story
     
+    def _firma_flowable(self, firma_path, width, height):
+        if firma_path and isinstance(firma_path, str) and os.path.exists(firma_path):
+            try:
+                img = Image(firma_path)
+                img.hAlign = "CENTER"
+                img._restrictSize(width, height)
+                return img
+            except Exception:
+                pass
+        return EspacioFirma(width, height)
+
     def _crear_seccion_firmas(self, total_w, encabezado):
         """
         Crea la sección de firmas y sello al final del informe.
@@ -1355,6 +1385,8 @@ class ReporteInspeccionVisual:
         # Obtener datos del encabezado
         elaboro_nombre = encabezado.get("elaboro", "")
         reviso_nombre = encabezado.get("reviso", "")
+        firma_elaboro_path = encabezado.get("firma_elaboro_path", "")
+        firma_reviso_path = encabezado.get("firma_reviso_path", "")
         cliente_nombre = encabezado.get("cliente", "Concreacero")
         
         # Altura reducida para las secciones de firma
@@ -1377,7 +1409,7 @@ class ReporteInspeccionVisual:
         
         # Fila 2: Contenido de las secciones
         # Columna Elaboró: solo espacio para firma (sin nombre)
-        espacio_firma_elaboro = EspacioFirma(col_elaboro - 6*mm, altura_firma - 4*mm)
+        espacio_firma_elaboro = self._firma_flowable(firma_elaboro_path, col_elaboro - 6*mm, altura_firma - 4*mm)
         celda_elaboro = Table([
             [espacio_firma_elaboro],
         ], colWidths=[col_elaboro - 6*mm], splitByRow=0, splitInRow=0)
@@ -1391,7 +1423,7 @@ class ReporteInspeccionVisual:
         # Columna Revisó: espacios para sello, NIT y firma (sin cuadros ni texto)
         espacio_sello = EspacioFirma(15*mm, 12*mm)
         espacio_nit = EspacioFirma(15*mm, 4*mm)
-        espacio_firma_reviso = EspacioFirma(col_reviso - 22*mm, altura_firma - 6*mm)
+        espacio_firma_reviso = self._firma_flowable(firma_reviso_path, col_reviso - 22*mm, altura_firma - 6*mm)
         
         # Tabla interna más compacta
         celda_reviso_interna = Table([
