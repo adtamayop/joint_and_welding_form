@@ -311,6 +311,18 @@ elementos_key = "tabla_elementos_5_1"
 if elementos_key not in st.session_state:
     st.session_state[elementos_key] = []
 
+bulk_col_1, bulk_col_2 = st.columns([2, 1.5])
+with bulk_col_1:
+    if st.button("Marcar toda la sección como Fuera de Alcance", key="bulk_fda_ut"):
+        for idx in range(len(st.session_state[elementos_key])):
+            st.session_state[elementos_key][idx]["evaluacion_junta"] = "Fuera de Alcance"
+        st.rerun()
+with bulk_col_2:
+    if st.button("Restablecer sección", key="bulk_reset_ut"):
+        for idx in range(len(st.session_state[elementos_key])):
+            st.session_state[elementos_key][idx]["evaluacion_junta"] = "Satisfactorio"
+        st.rerun()
+
 # Función para agregar una nueva fila
 def agregar_fila_elemento_ut():
     nuevo_numero = len(st.session_state[elementos_key]) + 1

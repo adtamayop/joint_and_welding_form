@@ -146,7 +146,7 @@ fases_items = [
         ]
     },
     {
-        "fase": "Inicio de la soldadura",
+        "fase": "INICIO DE LA SOLDADURA",
         "items": [
             "Ángulo de chaflán",
             "Hombro de raíz",
@@ -181,13 +181,71 @@ if "tabla_fases_2_1" not in st.session_state:
                 "resultado": "Satisfactorio",
                 "observacion": ""
             })
+else:
+    # Migrar etiquetas de fase antiguas a nombres canónicos para mantener compatibilidad
+    fase_canonica = {
+        "ANTES DE INICIAR EL PROCESO DE SOLDADURA": "ANTES DE INICIAR EL PROCESO DE SOLDADURA",
+        "INICIO DE LA SOLDADURA": "INICIO DE LA SOLDADURA",
+        "DESPUÉS DE LA SOLDADURA": "DESPUÉS DE LA SOLDADURA",
+    }
+
+    for idx, fila in enumerate(st.session_state.tabla_fases_2_1):
+        nombre = str(fila.get("fase", "")).upper().strip()
+        if "ANTES DE INICIAR" in nombre:
+            st.session_state.tabla_fases_2_1[idx]["fase"] = fase_canonica["ANTES DE INICIAR EL PROCESO DE SOLDADURA"]
+        elif "INICIO" in nombre:
+            st.session_state.tabla_fases_2_1[idx]["fase"] = fase_canonica["INICIO DE LA SOLDADURA"]
+        elif "DESPUÉS" in nombre or "DESPUES" in nombre:
+            st.session_state.tabla_fases_2_1[idx]["fase"] = fase_canonica["DESPUÉS DE LA SOLDADURA"]
+
+    # Asegurar que existan todos los ítems esperados en cada fase
+    existentes = {
+        (f.get("fase", ""), f.get("item", ""))
+        for f in st.session_state.tabla_fases_2_1
+    }
+    for fase in fases_items:
+        for item in fase["items"]:
+            key = (fase["fase"], item)
+            if key not in existentes:
+                st.session_state.tabla_fases_2_1.append({
+                    "fase": fase["fase"],
+                    "item": item,
+                    "aplica": "Aplica",
+                    "resultado": "Satisfactorio",
+                    "observacion": ""
+                })
 
 opciones_aplica = ["Aplica", "No Aplica", "Fuera de Alcance"]
 opciones_resultado = ["Satisfactorio", "No satisfactorio"]
 
 # Mostrar la tabla de fases con ítems
 for fase in fases_items:
+    phase_indices = [
+        idx for idx, fila in enumerate(st.session_state.tabla_fases_2_1)
+        if fila["fase"] == fase["fase"]
+    ]
+
     st.markdown(f"**{fase['fase']}**")
+    action_col_1, action_col_2, action_col_3 = st.columns([2, 2, 1.5])
+    with action_col_1:
+        if st.button("Marcar sección como No Aplica", key=f"fase_no_aplica_{fase['fase']}"):
+            for idx in phase_indices:
+                st.session_state.tabla_fases_2_1[idx]["aplica"] = "No Aplica"
+                st.session_state.tabla_fases_2_1[idx]["resultado"] = "No Aplica"
+            st.rerun()
+    with action_col_2:
+        if st.button("Marcar sección como Fuera de Alcance", key=f"fase_fuera_{fase['fase']}"):
+            for idx in phase_indices:
+                st.session_state.tabla_fases_2_1[idx]["aplica"] = "Fuera de Alcance"
+                st.session_state.tabla_fases_2_1[idx]["resultado"] = "Fuera de Alcance"
+            st.rerun()
+    with action_col_3:
+        if st.button("Restablecer sección", key=f"fase_reset_{fase['fase']}"):
+            for idx in phase_indices:
+                st.session_state.tabla_fases_2_1[idx]["aplica"] = "Aplica"
+                st.session_state.tabla_fases_2_1[idx]["resultado"] = "Satisfactorio"
+            st.rerun()
+
     # Encabezados
     col1, col2, col3, col4 = st.columns([3, 2, 2, 5])
     col1.markdown("**Ítem**")
@@ -195,10 +253,10 @@ for fase in fases_items:
     col3.markdown("**Resultado**")
     col4.markdown("**Observaciones**")
     # Filas
-    for i, fila in enumerate([f for f in st.session_state.tabla_fases_2_1 if f["fase"] == fase["fase"]]):
+    for i, idx in enumerate(phase_indices):
+        fila = st.session_state.tabla_fases_2_1[idx]
         c1, c2, c3, c4 = st.columns([3, 2, 2, 5])
         c1.write(fila["item"])
-        idx = st.session_state.tabla_fases_2_1.index(fila)
         st.session_state.tabla_fases_2_1[idx]["aplica"] = c2.selectbox(
             f"Aplica para {fila['item']}",
             options=opciones_aplica,

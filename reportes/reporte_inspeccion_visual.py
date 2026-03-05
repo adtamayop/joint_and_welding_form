@@ -1138,7 +1138,7 @@ class ReporteInspeccionVisual:
         if fases.get('inicio_junta'):
             # Usar la nueva función con 4 columnas: Item, Aplica, Satisfactorio, Observaciones
             story.append(self._section_box_with_columns(
-                f"{seccion}. INICIO DE LA JUNTA", 
+                f"{seccion}. INICIO DE LA SOLDADURA", 
                 fases['inicio_junta'], 
                 total_w,
                 row_height=compact_row_height, 

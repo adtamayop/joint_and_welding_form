@@ -335,6 +335,18 @@ elementos_key = "tabla_elementos_3_1"
 if elementos_key not in st.session_state:
     st.session_state[elementos_key] = []
 
+bulk_col_1, bulk_col_2 = st.columns([2, 1.5])
+with bulk_col_1:
+    if st.button("Marcar toda la sección como Fuera de Alcance", key="bulk_fda_pt"):
+        for idx in range(len(st.session_state[elementos_key])):
+            st.session_state[elementos_key][idx]["calificacion"] = "Fuera de Alcance"
+        st.rerun()
+with bulk_col_2:
+    if st.button("Restablecer sección", key="bulk_reset_pt"):
+        for idx in range(len(st.session_state[elementos_key])):
+            st.session_state[elementos_key][idx]["calificacion"] = "Satisfactorio"
+        st.rerun()
+
 # Clave para rastrear los IDs de elementos ya heredados
 elementos_heredados_key = "elementos_heredados_ids_3_1"
 if elementos_heredados_key not in st.session_state:
