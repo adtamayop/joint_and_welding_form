@@ -339,10 +339,6 @@ def agregar_fila_elemento_ut():
     }
     st.session_state[elementos_key].append(nueva_fila)
 
-# Botón para agregar fila
-if st.button("Agregar Elemento", key="agregar_elemento_ut"):
-    agregar_fila_elemento_ut()
-
 # Opciones para la evaluación de la junta
 opciones_evaluacion = ["Satisfactorio", "No Satisfactorio", "Fuera de Alcance"]
 
@@ -487,6 +483,10 @@ if st.session_state[elementos_key]:
             st.markdown("---")
 else:
     st.info("No hay elementos inspeccionados. Use el botón 'Agregar Elemento' para comenzar.")
+
+if st.button("Agregar Elemento", key="agregar_elemento_ut"):
+    agregar_fila_elemento_ut()
+    st.rerun()
 
 juntas = st.number_input(
     "JUNTAS:",
@@ -669,6 +669,10 @@ datos_finales = {
     ]
 }
 
+saved_key = "saved_5_1"
+if saved_key not in st.session_state:
+    st.session_state[saved_key] = "bloque_5_1" in st.session_state
+
 if st.button("Guardar Datos", key="guardar_datos_ut"):
     st.write("### Datos guardados correctamente")
     
@@ -689,3 +693,8 @@ if st.button("Guardar Datos", key="guardar_datos_ut"):
         "registros_fotograficos": datos_finales["imagenes"]
     }
     persist_session_state()
+    st.session_state[saved_key] = True
+
+if st.session_state.get(saved_key, False):
+    if st.button("Siguiente sección", key="siguiente_seccion_5_1", type="primary"):
+        st.switch_page("bloque_reportes.py")

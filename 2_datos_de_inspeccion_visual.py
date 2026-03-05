@@ -264,10 +264,6 @@ def agregar_fila_elemento():
     }
     st.session_state.tabla_elementos_2_1.append(nueva_fila)
 
-# Botón para agregar fila
-if st.button("Agregar Elemento"):
-    agregar_fila_elemento()
-
 # Opciones para la calificación
 opciones_calificacion = ["(C) Conforme", "(NC) No conforme", "(RI) Reinspeccionar", "(C(R)) Conforme después de reparación"]
 
@@ -337,6 +333,10 @@ if st.session_state.tabla_elementos_2_1:
             st.rerun()
 else:
     st.info("No hay elementos inspeccionados. Use el botón 'Agregar Elemento' para comenzar.")
+
+if st.button("Agregar Elemento", key="agregar_elemento_2_1"):
+    agregar_fila_elemento()
+    st.rerun()
 
 st.write("---")
 
@@ -508,7 +508,11 @@ datos_finales = {
     ]
 }
 
-if st.button("Guardar Datos"):
+saved_key = "saved_2_1"
+if saved_key not in st.session_state:
+    st.session_state[saved_key] = "bloque_2_1" in st.session_state
+
+if st.button("Guardar Datos", key="guardar_datos_2_1"):
     st.write("### Datos guardados correctamente")
 
     # Si el usuario seleccionó archivos pero no pulsó "Agregar Imágenes al Esquema",
@@ -559,3 +563,12 @@ if st.button("Guardar Datos"):
         ]
     }
     persist_session_state()
+    st.session_state[saved_key] = True
+
+if st.session_state.get(saved_key, False):
+    if st.button("Siguiente sección", key="siguiente_seccion_2_1", type="primary"):
+        modulos_activos = st.session_state.get("pages_config", {}).get("modulos", [])
+        if len(modulos_activos) <= 1:
+            st.switch_page("bloque_reportes.py")
+        else:
+            st.switch_page("3_datos_de_inspeccion_de_liquidos_penetrantes.py")

@@ -411,10 +411,6 @@ def agregar_fila_elemento_pt():
     }
     st.session_state[elementos_key].append(nueva_fila)
 
-# Botón para agregar elemento
-if st.button("Agregar Elemento", key="agregar_elemento_pt"):
-    agregar_fila_elemento_pt()
-
 # Opciones para la calificación
 opciones_calificacion = ["Satisfactorio", "No Satisfactorio", "Fuera de Alcance"]
 
@@ -475,6 +471,10 @@ if st.session_state[elementos_key]:
             st.rerun()
 else:
     st.info("No hay elementos inspeccionados. Use el botón 'Agregar Elemento' para comenzar.")
+
+if st.button("Agregar Elemento", key="agregar_elemento_pt"):
+    agregar_fila_elemento_pt()
+    st.rerun()
 
 # Inicializar resultados_pt para compatibilidad
 if "resultados_pt" not in st.session_state:
@@ -651,6 +651,10 @@ datos_finales = {
     "observaciones_generales": observaciones_generales
 }
 
+saved_key = "saved_3_1"
+if saved_key not in st.session_state:
+    st.session_state[saved_key] = "bloque_3_1" in st.session_state
+
 if st.button("Guardar Datos", key="guardar_datos_pt"):
     st.write("### Datos guardados correctamente")
     
@@ -674,4 +678,9 @@ if st.button("Guardar Datos", key="guardar_datos_pt"):
         "registros_fotograficos": datos_finales["imagenes"]
     }
     persist_session_state()
+    st.session_state[saved_key] = True
     st.rerun()
+
+if st.session_state.get(saved_key, False):
+    if st.button("Siguiente sección", key="siguiente_seccion_3_1", type="primary"):
+        st.switch_page("4_datos_de_inspeccion_de_particulas_magneticas.py")

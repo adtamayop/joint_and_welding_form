@@ -299,7 +299,11 @@ with tab2:
         else:
             st.warning("⚠️ No hay módulos seleccionados")
 
-# Botón de guardar en la parte inferior
+# Botones de acción en la parte inferior
+saved_key = "saved_1_0"
+if saved_key not in st.session_state:
+    st.session_state[saved_key] = "bloque_1" in st.session_state
+
 col1, col2, col3 = st.columns([1,1,1])
 with col2:
     if st.button("💾 Guardar Configuración", type="primary", use_container_width=True):
@@ -369,6 +373,7 @@ with col2:
             ]
 
             persist_session_state()
+            st.session_state[saved_key] = True
             st.success("✅ Configuración guardada correctamente")
             st.balloons()
             st.rerun() 
@@ -384,3 +389,15 @@ with col3:
         }
         st.success("✅ Formulario limpiado y datos guardados eliminados")
         st.rerun()
+
+if st.session_state.get(saved_key, False):
+    col_next_1, col_next_2, col_next_3 = st.columns([1, 1, 1])
+    with col_next_2:
+        if st.button("Siguiente sección", key="siguiente_seccion_1_0", type="primary", use_container_width=True):
+            modulos_activos = st.session_state.get("pages_config", {}).get("modulos", [])
+            if modulos_activos:
+                pagina_objetivo = getattr(modulos_activos[0], "_page", None)
+                if pagina_objetivo:
+                    st.switch_page(pagina_objetivo)
+                    st.stop()
+            st.switch_page("2_datos_de_inspeccion_visual.py")
