@@ -11,13 +11,6 @@ from utils import (
 )
 from save_state import persist_session_state
 
-st.set_page_config(
-    page_title="2 Inspección Visual",
-    page_icon="👁️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 # Obtener listas de configuración
 procedimientos = cargar_procedimientos()
 kits = cargar_kits()
@@ -294,12 +287,16 @@ if st.session_state.tabla_elementos_2_1:
         )
         
         # Indicación
-        st.session_state.tabla_elementos_2_1[i]["indicacion"] = c3.text_input(
+        indicacion_val = c3.text_input(
             f"Indicación del elemento {elemento['numero']}",
             value=elemento["indicacion"],
             key=f"elem_ind_2_1_{i}",
             label_visibility="collapsed"
         )
+        st.session_state.tabla_elementos_2_1[i]["indicacion"] = indicacion_val
+        indicacion_tiene_texto = bool(indicacion_val.strip())
+        if indicacion_tiene_texto:
+            st.session_state.tabla_elementos_2_1[i]["calificacion"] = "(NC) No conforme"
         
         # Calificación
         calificacion_actual = elemento["calificacion"]
@@ -310,13 +307,17 @@ if st.session_state.tabla_elementos_2_1:
             index_calificacion = 0
             calificacion_actual = opciones_calificacion[0]
         
-        st.session_state.tabla_elementos_2_1[i]["calificacion"] = c4.selectbox(
+        calificacion_seleccionada = c4.selectbox(
             f"Calificación del elemento {elemento['numero']}",
             options=opciones_calificacion,
             index=index_calificacion,
             key=f"elem_cal_2_1_{i}",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            disabled=indicacion_tiene_texto,
+            help="Se fuerza a No conforme cuando hay texto en Indicación." if indicacion_tiene_texto else None
         )
+        if not indicacion_tiene_texto:
+            st.session_state.tabla_elementos_2_1[i]["calificacion"] = calificacion_seleccionada
         
         # Observación
         st.session_state.tabla_elementos_2_1[i]["observacion"] = c5.text_area(

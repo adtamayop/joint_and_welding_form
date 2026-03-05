@@ -13,14 +13,6 @@ def formatear_fecha_para_display(fecha):
         return f"{fecha.day:02d}/{meses_abrev[fecha.month-1]}/{fecha.year}"
     return str(fecha)
 
-# Configuración de la página
-st.set_page_config(
-    page_title="Datos del Proyecto",
-    page_icon="📋",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 # Estilo personalizado restaurado
 st.markdown("""
     <style>
@@ -205,7 +197,7 @@ with tab1:
                         f"- 🧲 Partículas: `{generar_numero_informe(numero_orden, consecutivo_inicial, year, 2)}`\n"
                         f"- 📡 Ultrasonido: `{generar_numero_informe(numero_orden, consecutivo_inicial, year, 3)}`"
                     )
-                except:
+                except (ValueError, TypeError):
                     st.warning("⚠️ Por favor ingrese números válidos")
 
     with col2:

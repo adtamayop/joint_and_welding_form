@@ -1,6 +1,13 @@
 import streamlit as st
 from save_state import get_saved_at, restore_session_state
 
+st.set_page_config(
+    page_title="Joint and Welding Form",
+    page_icon="📋",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 # Modo de prueba: mostrar solo el módulo de inspección visual en la navegación
 SOLO_REPORTE_VISUAL = True
 MODULO_VISUAL = "2_datos_de_inspeccion_visual.py"

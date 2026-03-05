@@ -11,13 +11,6 @@ from utils import (
 )
 from save_state import persist_session_state
 
-st.set_page_config(
-    page_title="5 Inspección de Ultrasonido",
-    page_icon="🔊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 st.title("🔊 5 Datos de Inspección de Ultrasonido")
 
 # Obtener la norma global

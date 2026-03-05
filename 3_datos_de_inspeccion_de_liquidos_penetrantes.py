@@ -11,13 +11,6 @@ from utils import (
 )
 from save_state import persist_session_state
 
-st.set_page_config(
-    page_title="3 Datos de Inspección de Líquidos Penetrantes",
-    page_icon="💧",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 st.title("💧 3 Datos de Inspección de Líquidos Penetrantes")
 
 # Obtener la norma global
@@ -440,21 +433,29 @@ if st.session_state[elementos_key]:
         )
         
         # Indicación (editable)
-        st.session_state[elementos_key][i]["indicacion"] = c3.text_input(
+        indicacion_val = c3.text_input(
             f"Indicación del elemento {elemento['numero']}",
             value=elemento["indicacion"],
             key=f"elem_ind_3_1_{i}",
             label_visibility="collapsed"
         )
-        
+        st.session_state[elementos_key][i]["indicacion"] = indicacion_val
+        indicacion_tiene_texto = bool(indicacion_val.strip())
+        if indicacion_tiene_texto:
+            st.session_state[elementos_key][i]["calificacion"] = "No Satisfactorio"
+
         # Calificación (editable)
-        st.session_state[elementos_key][i]["calificacion"] = c4.selectbox(
+        calificacion_seleccionada = c4.selectbox(
             f"Calificación del elemento {elemento['numero']}",
             options=opciones_calificacion,
             index=opciones_calificacion.index(elemento["calificacion"]),
             key=f"elem_cal_3_1_{i}",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            disabled=indicacion_tiene_texto,
+            help="Se fuerza a No Satisfactorio cuando hay texto en Indicación." if indicacion_tiene_texto else None
         )
+        if not indicacion_tiene_texto:
+            st.session_state[elementos_key][i]["calificacion"] = calificacion_seleccionada
         
         # Observación (editable)
         st.session_state[elementos_key][i]["observacion"] = c5.text_area(
