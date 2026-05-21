@@ -5,6 +5,7 @@ from datetime import datetime
 from uuid import uuid4
 
 materiales_base = [
+    "No Especificado",
     "ASTM A36",
     "ASTM A283 Gr A",
     "ASTM A283 Gr B",
